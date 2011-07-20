@@ -28,7 +28,7 @@ function query(selector, context) {
     }
 }
 
-exports.query = query;
+module.exports = query;
 
 // *************************************************************************************************
 

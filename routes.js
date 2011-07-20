@@ -1,6 +1,6 @@
 /* See license.txt for terms of usage */
 
-var $ = require('./query').query;
+var $ = require('./query');
 
 var routes = [];
 var mainView = null;
@@ -66,9 +66,7 @@ function setMainView(view) {
     $('body').empty().append(view);
 }
 
-exports.ready = function() {
-    currentLocation = location.href;
-
+require.ready(function() {
     window.addEventListener('click', function(event) {
         var link = $(event.target).closest('a');
 
@@ -97,8 +95,8 @@ exports.ready = function() {
         }
     }, false);
 
-    //update(location.href, document.baseURI);    
-}
+    update(location.pathname, document.baseURI);    
+});
 
 exports.add = add;
 exports.match = match;

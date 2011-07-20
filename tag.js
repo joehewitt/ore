@@ -1,7 +1,7 @@
 /* See license.txt for terms of usage */
 
 var _ = require('./iter'),
-    $ = require('./query').query,
+    $ = require('./query'),
     events = require('./events');
 
 var womb = null;

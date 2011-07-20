@@ -18,31 +18,38 @@ exports.get = function(url, params, callback) {
     xhr.send();
 }
 
-function jsonp(url, params, cb) {
-    window.jsonp = function(o) {
-        delete window.jsonp;
-        cb(0, o);
-    }
-    
-    var pairs = ['callback=jsonp'];
+exports.getJSON = function(url, params, cb) {
+   var pairs = ['callback=jsonp'];
     _.each(params, function(value, key) {
         pairs[pairs.length] = key+'='+value;
     });
     if (pairs.length) {
         url = url + (url.indexOf('?') == -1 ? '?' : '&') + pairs.join('&');
     }
-    
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = url;
-    script.onload = script.onerror = function(event) {
-        if (script.parentNode) {
-            script.parentNode.removeChild(script);
-        }
-    };
-    document.body.appendChild(script);
+
+    window.jsonp = function(o) {
+        delete window.jsonp;
+        cb(0, o);
+    }
+
+    if (has('appjs')) {
+        appjs.load(url, function(err, data) {
+            if (err) {
+                cb(err);            
+            } else {
+                eval(data);
+            }
+        });
+    } else {
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = url;
+        script.onload = script.onerror = function(event) {
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
+        };
+        document.body.appendChild(script);
+    }
 }
 
-exports.getJSON = function(url, params, cb) {
-    return jsonp(url, params, cb);
-}
