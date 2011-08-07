@@ -37,7 +37,7 @@ exports.getJSON = function(url, params, cb) {
             if (err) {
                 cb(err);            
             } else {
-                eval(data);
+                sandboxEval(data);
             }
         });
     } else {

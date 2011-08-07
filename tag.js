@@ -1,4 +1,3 @@
-/* See license.txt for terms of usage */
 
 var _ = require('./iter'),
     $ = require('./query'),
@@ -145,84 +144,89 @@ Tag.prototype = {
         fnBlock.push.apply(fnBlock, blocks);
         fnBlock.push('})');
 
-        function __escape__(value) {
-            function replaceChars(ch) {
-                switch (ch) {
-                    case "<":
-                        return "&lt;";
-                    case ">":
-                        return "&gt;";
-                    case "&":
-                        return "&amp;";
-                    case "'":
-                        return "&#39;";
-                    case '"':
-                        return "&quot;";
-                }
-                return "?";
-            }
-            return String(value).replace(/[<>&"']/g, replaceChars);
-        }
+        var sandbox = {
+            NoInit: NoInit,
+            _: _,
 
-        function __embed__(tag, code, outputs, context, args) {
-            if (!tag || !tag.tag)
-                return;
-
-            tag.tag.compile();
-
-            var tagOutputs = [];
-            var markupArgs = [context, args, code, tagOutputs];
-            markupArgs.push.apply(markupArgs, tag.tag.staticArgs);
-            tag.tag.renderMarkup.apply(tag.tag.proto, markupArgs);
-
-            outputs.push(tag);
-            outputs.push(tagOutputs);
-        }
-
-        function __loop__(varName, iter, outputs, fn) {
-            var iterOuts = [];
-            outputs.push(iterOuts);
-
-            if (iter) {
-                var valueHolder = {};
-                for (var i = 0; i < iter.length; ++i) {
-                    valueHolder[varName] = iter[i];
-                    var itemOuts = [0,0];
-                    iterOuts.push(itemOuts);
-                    fn.apply(this, [i, valueHolder, itemOuts]);
-                }
-            }
-        }
-
-        function __if__(booleanVar, outputs, fn) {
-            var ifControl = [];
-            outputs.push(ifControl);
-
-            if (booleanVar) {
-              ifControl.push(1);
-              fn.apply(this, [ifControl]);
-            } else {
-              ifControl.push(0);
-            }
-        }
-
-        function __get__(name, bound) {
-            for (var i = arguments.length-1; i > 1; --i) {
-                var obj = arguments[i];
-                var v = obj[name];
-                if (v !== undefined) {
-                    if (bound && v) {
-                        v = _.bind(v, obj);
+            __escape__: function(value) {
+                function replaceChars(ch) {
+                    switch (ch) {
+                        case "<":
+                            return "&lt;";
+                        case ">":
+                            return "&gt;";
+                        case "&":
+                            return "&amp;";
+                        case "'":
+                            return "&#39;";
+                        case '"':
+                            return "&quot;";
                     }
-                    return v;
+                    return "?";
                 }
+                return String(value).replace(/[<>&"']/g, replaceChars);
+            },
+
+            __embed__: function(tag, code, outputs, context, args) {
+                if (!tag || !tag.tag)
+                    return;
+
+                tag.tag.compile();
+
+                var tagOutputs = [];
+                var markupArgs = [context, args, code, tagOutputs];
+                markupArgs.push.apply(markupArgs, tag.tag.staticArgs);
+                tag.tag.renderMarkup.apply(tag.tag.proto, markupArgs);
+
+                outputs.push(tag);
+                outputs.push(tagOutputs);
+            },
+
+            __loop__: function(varName, iter, outputs, fn) {
+                var iterOuts = [];
+                outputs.push(iterOuts);
+
+                if (iter) {
+                    var valueHolder = {};
+                    for (var i = 0; i < iter.length; ++i) {
+                        valueHolder[varName] = iter[i];
+                        var itemOuts = [0,0];
+                        iterOuts.push(itemOuts);
+                        fn.apply(this, [i, valueHolder, itemOuts]);
+                    }
+                }
+            },
+
+            __if__: function(booleanVar, outputs, fn) {
+                var ifControl = [];
+                outputs.push(ifControl);
+
+                if (booleanVar) {
+                  ifControl.push(1);
+                  fn.apply(this, [ifControl]);
+                } else {
+                  ifControl.push(0);
+                }
+            },
+
+            __get__: function(name, bound) {
+                for (var i = arguments.length-1; i > 1; --i) {
+                    var obj = arguments[i];
+                    var v = obj[name];
+                    if (v !== undefined) {
+                        if (bound && v) {
+                            v = _.bind(v, obj);
+                        }
+                        return v;
+                    }
+                }
+                console.log('WARNING: "'+name+'" not found');
             }
-            console.log('WARNING: "'+name+'" not found');
-        }
+        };
 
         var js = fnBlock.join("");
         // console.log(js.replace(/(\;|\{)/g, "$1\n"));
-        this.renderMarkup = eval(js);
+        this.renderMarkup = sandboxEval(js, sandbox);
     },
 
     getVarNames: function(names) {
@@ -477,72 +481,77 @@ Tag.prototype = {
         fnBlock.push('  return ', nodeCount, ';');
         fnBlock.push('})');
 
-        function __embed__(node, tag, dynamicArgs) {
-            if (!tag || !tag.tag)
-                return;
+        var sandbox = {
+            NoInit: NoInit,
+            _: _,
 
-            tag.tag.compile();
+            __embed__: function(node, tag, dynamicArgs) {
+                if (!tag || !tag.tag)
+                    return;
 
-            var domArgs = [node, 0];
-            domArgs.push.apply(domArgs, tag.tag.staticDOMArgs);
-            domArgs.push.apply(domArgs, dynamicArgs);
+                tag.tag.compile();
 
-            return tag.tag.renderDOM.apply(tag.tag.proto, domArgs);
-        }
+                var domArgs = [node, 0];
+                domArgs.push.apply(domArgs, tag.tag.staticDOMArgs);
+                domArgs.push.apply(domArgs, dynamicArgs);
 
-        function __loop__(iter, fn) {
-            var nodeCount = 0;
-            for (var i = 0; i < iter.length; ++i) {
-                iter[i][0] = i;
-                iter[i][1] = nodeCount;
-                nodeCount += fn.apply(this, iter[i]);
-            }
+                return tag.tag.renderDOM.apply(tag.tag.proto, domArgs);
+            },
 
-            return nodeCount;
-        }
+            __loop__: function(iter, fn) {
+                var nodeCount = 0;
+                for (var i = 0; i < iter.length; ++i) {
+                    iter[i][0] = i;
+                    iter[i][1] = nodeCount;
+                    nodeCount += fn.apply(this, iter[i]);
+                }
 
-        function __if__(control, fn) {
-            if (control[0]) {
-              fn.apply(this, [0,control[1]]);
-            } else {
-              // We need to skip it
-            }
-        }
+                return nodeCount;
+            },
 
-        function __path__(parent, offset) {
-            var root = parent;
-
-            for (var i = 2; i < arguments.length; ++i) {
-                var index = arguments[i];
-
-                if (i == 3)
-                    index += offset;
-
-                if (index == -1) {
-                    parent = parent.parentNode;
+            __if__: function(control, fn) {
+                if (control[0]) {
+                  fn.apply(this, [0,control[1]]);
                 } else {
-                    parent = parent.childNodes[index];
-                }    
-            }
+                  // We need to skip it
+                }
+            },
 
-            return parent;
-        }
+            __path__: function(parent, offset) {
+                var root = parent;
 
-        function __listen__(node, object, name, cb) {
-            var e = object[name];
-            if (e == events.event) {
-                e = object[name] = e.create();
-            }
-            if (e && e.addListener) {
-                e.addListener(cb);
-            } else {
-                node.addEventListener(name, cb, false);
-            }
-        }
+                for (var i = 2; i < arguments.length; ++i) {
+                    var index = arguments[i];
+
+                    if (i == 3)
+                        index += offset;
+
+                    if (index == -1) {
+                        parent = parent.parentNode;
+                    } else {
+                        parent = parent.childNodes[index];
+                    }    
+                }
+
+                return parent;
+            },
+
+            __listen__: function(node, object, name, cb) {
+                var e = object[name];
+                if (e == events.event) {
+                    e = object[name] = e.create();
+                }
+                if (e && e.addListener) {
+                    e.addListener(cb);
+                } else {
+                    node.addEventListener(name, cb, false);
+                }
+            },
+        };
         
         var js = fnBlock.join("");
         // console.log(js.replace(/(\;|\{)/g, "$1\n"));
-        this.renderDOM = eval(js);
+        this.renderDOM = sandboxEval(js, sandbox);
     },
 
     generateDOM: function(path, blocks, args, stack) {

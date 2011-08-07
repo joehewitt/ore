@@ -30,10 +30,9 @@ function update(href, base, isBack) {
     }
     var path = href.substr(base.length);
     if (!path) {
-        path = '/';
+        path = href;
     }
 
-    // XXXjoe No window.location.search on server
     if (window.location.search) {
         path = path.substr(0, path.length-window.location.search.length);
     }
