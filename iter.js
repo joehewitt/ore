@@ -1,9 +1,12 @@
 /* See license.txt for terms of usage */
 /* Based on http://documentcloud.github.com/underscore/ */
 
+has("array-isarray");
+has("dom-nodelist-sliceable");
+
+var breaker = {};
 var slice = Array.prototype.slice;
 var isArray = Array.isArray;
-var breaker = {};
 
 function each(a, cb) {
     if (a) {
@@ -44,11 +47,15 @@ function extend(a, b) {
     for (var k in b) {
         // Thanks to John Resig for this code
         // http://ejohn.org/blog/javascript-getters-and-setters/
-        var g = b.__lookupGetter__(k), s = b.__lookupSetter__(k);
-        if (g || s) {
-            if (g) a.__defineGetter__(k, g);
-            if (g) a.__defineGetter__(k, g);
-        } else if (b.hasOwnProperty(k)) {
+        if (has("object-__proto__")) {
+            var g = b.__lookupGetter__(k), s = b.__lookupSetter__(k);
+            if (g || s) {
+                if (g) a.__defineGetter__(k, g);
+                if (g) a.__defineGetter__(k, g);
+            } else if (b.hasOwnProperty(k)) {
+                a[k] = b[k];
+            }
+        } else {
             a[k] = b[k];
         }
     }

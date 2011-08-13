@@ -28,7 +28,7 @@ exports.getJSON = function(url, params, cb) {
     }
 
     window.jsonp = function(o) {
-        delete window.jsonp;
+        window.jsonp = undefined;
         cb(0, o);
     }
 

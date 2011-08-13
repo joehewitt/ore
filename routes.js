@@ -1,10 +1,25 @@
 /* See license.txt for terms of usage */
 
+var D;
+
+has("json-parse");
+
 var $ = require('./query');
 
 var routes = [];
 var mainView = null;
 var currentLocation;
+var nextScroll;
+var historyIndex;
+
+if (has('native-sessionstorage')) {
+    historyIndex = !sessionStorage.scrollIndex ? 0 : parseInt(sessionStorage.scrollIndex);
+}
+
+var REPLACE = "REPLACE";
+var PUSH = "PUSH";
+var BACK = "BACK";
+var FORWARD = "FORWARD";
 
 function add(pattern, callback) {
     routes[routes.length] = {pattern: new RegExp(pattern), callback: callback};
@@ -24,23 +39,29 @@ function match(path) {
     }
 }
 
-function update(href, base, isBack) {
-    if (base.substr(base.length-1) == '/') {
-        base = base.substr(0, base.length-1);
-    }
-    var path = href.substr(base.length);
-    if (!path) {
-        path = href;
-    }
-
-    if (window.location.search) {
-        path = path.substr(0, path.length-window.location.search.length);
-    }
-    
+function update(path, action, goToIndex) {
     var m = match(path);
     if (m) {
-        m.route.callback(m.args.slice(1), isBack);
+        D&&D(action);
+        if (action == REPLACE) {
+            pushScroll(true);
+        } else if (action == PUSH) {
+            pushScroll();
+        } else if (action == BACK) {
+            popScroll(false, goToIndex);
+        } else if (action == FORWARD) {
+            popScroll(true, goToIndex);
+        } else {
+            syncScroll();        
+        }
+
+        m.route.callback(m.args.slice(1), action == BACK);
+    } else {
+        if (exports.errorHandler) {
+            exports.errorHandler([404]);
+        }
     }
+
     return !!m;
 }
 
@@ -66,36 +87,107 @@ function setMainView(view) {
 }
 
 require.ready(function() {
-    window.addEventListener('click', function(event) {
-        var link = $(event.target).closest('a');
+    if (has("native-history-state")) {
+        $(window).listen('click', function(event) {
+            if (event.button == 0 && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+                var link = $(event.target).closest('a');
 
-        if (link.val() && link.prop('hostname') == window.location.hostname) {
+                if (link.val() && link.prop('hostname') == window.location.hostname) {
+                    event.preventDefault();
 
-            event.preventDefault();
-            if (link.attr('type') == 'action') {
-                
-            } else if (link.attr('type') == 'replace') {
-                currentLocation = link.attr('href');
-                history.replaceState({referrer: location.href}, '', currentLocation);
-                update(location.href, document.baseURI);
-            } else {
-                currentLocation = link.attr('href');
-                history.pushState({referrer: location.href}, '', currentLocation);
-                update(location.href, document.baseURI);
+                    if (link.attr('type') == 'action') {
+                        
+                    } else if (link.attr('type') == 'replace') {
+                        currentLocation = link.attr('href');
+                        history.replaceState({referer: location.href, id: historyIndex}, '', currentLocation);
+                        update(location.pathname, REPLACE);
+                    } else {
+                        currentLocation = link.attr('href');
+                        history.pushState({referer: location.href, id: historyIndex}, '', currentLocation);
+                        update(location.pathname, PUSH);
+                    }
+                }
             }
-        }
-    }, false);
+        }, false);
+    }
 
-    window.addEventListener('popstate', function(event) {
-        var referrer = event.state ? event.state.referrer : '';
-        if (referrer) {
-            update(location.href, document.baseURI, referrer != currentLocation);
+    $(window).listen('unload', function(event) {
+        pushScroll(true);
+    });
+
+    $(window).listen('popstate', function(event) {
+        var referer = event.state ? event.state.referer : '';
+        if (currentLocation != location.href) {
+            var goToIndex;
+            if (event.state) {
+                goToIndex = event.state.id+1;
+            } else {
+                goToIndex = 0;
+            }
+
+            var action = !referer && !currentLocation ? null : referer != currentLocation ? BACK : FORWARD;
+            update(location.pathname, action, goToIndex);
             currentLocation = location.href;
         }
-    }, false);
+    });
 
-    update(location.pathname, document.baseURI);    
+    update(location.pathname);
+    currentLocation = location.href;
 });
+
+function pushScroll(replace) {
+    if (has('native-sessionstorage')) {
+        var scrolls = sessionStorage.scroll ? JSON.parse(sessionStorage.scroll) : [];
+        scrolls[historyIndex] = window.scrollY;
+        if (!replace || !scrolls.length) {
+            sessionStorage.scrollIndex = ++historyIndex;
+            scrolls.splice(historyIndex, scrolls.length-historyIndex, 0);
+        }
+        sessionStorage.scroll = JSON.stringify(scrolls);
+        D&&D('push', sessionStorage.scrollIndex, sessionStorage.scroll);
+    }
+}
+
+function popScroll(forward, goToIndex) {
+    if (has('native-sessionstorage')) {
+        if (sessionStorage.scroll) {
+            var scrolls = JSON.parse(sessionStorage.scroll);
+            if (currentLocation) {
+                scrolls[historyIndex] = window.scrollY;
+            }
+            if (goToIndex !== undefined) {
+                historyIndex = goToIndex;
+            } else if (forward) {
+                ++historyIndex;
+            } else {
+                --historyIndex;
+            }
+
+            nextScroll = scrolls[historyIndex];
+            sessionStorage.scroll = JSON.stringify(scrolls);
+            sessionStorage.scrollIndex = historyIndex;
+            D&&D('pop', sessionStorage.scrollIndex, sessionStorage.scroll);
+        }
+    }
+}
+
+function syncScroll(forward) {
+    if (has('native-sessionstorage')) {
+        if (sessionStorage.scroll) {
+            var scrolls = JSON.parse(sessionStorage.scroll);
+            nextScroll = scrolls[historyIndex];
+        }
+    }
+}
+
+exports.finalize = function() {
+    setTimeout(function() {
+        if (nextScroll !== undefined) {
+            window.scrollTo(0, nextScroll);
+            nextScroll = undefined;
+        }
+    }, 0)
+}
 
 exports.add = add;
 exports.match = match;

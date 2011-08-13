@@ -1,5 +1,8 @@
 /* See license.txt for terms of usage */
 
+has("string-trim");
+// has("dom-queryselector");
+
 var _ = require('./iter');
 
 var cssNumber = {
@@ -13,9 +16,7 @@ var cssNumber = {
 // *************************************************************************************************
 
 function query(selector, context) {
-    if (selector && selector.nodeType) {
-        return wrap(selector);
-    } else if (selector === 'body') {
+    if (selector === 'body') {
         return wrap(document.body);
     } else if (typeof selector === 'string') {
         if (!context && /^#([\w\-]+)$/.exec(selector)) {
@@ -23,8 +24,12 @@ function query(selector, context) {
             return wrapSet([document.getElementById(selector.substr(1))]);
         } else {
             var node = context ? unwrap(context) : document;
-            return wrapSet([].slice.call(node.querySelectorAll(selector)));
+            return wrapSet(_.slice(node.querySelectorAll
+                ? node.querySelectorAll(selector)
+                : document.querySelectorAll.call(node, selector)));
         }
+    } else {
+        return wrap(selector);
     }
 }
 
@@ -90,6 +95,30 @@ Set.prototype = {
         return wrapSet(parents);
     },
     
+    first: function() {
+        var children = [];
+       _.each(this.slots(), function(n) {
+            children.push(n.firstChild);
+        });
+        return wrapSet(children);
+    },
+    
+    last: function() {
+        var children = [];
+       _.each(this.slots(), function(n) {
+            children.push(n.lastChild);
+        });
+        return wrapSet(children);
+    },
+    
+    child: function(index) {
+        var children = [];
+       _.each(this.slots(), function(n) {
+            children.push(n.childNodes[index]);
+        });
+        return wrapSet(children);
+    },
+    
     addClass: function(name) {
        _.each(this.nodes, function(n) {
             !query(n).hasClass(name) && (n.className += (n.className ? ' ' : '') + name);
@@ -132,7 +161,14 @@ Set.prototype = {
     before: function(insertNode, beforeNode) {
         if (beforeNode) {
             var first = this.slots()[0];
-            act(insertNode, function action(n) { first.insertBefore(n, unwrap(beforeNode)); });
+            act(insertNode, function action(n) {
+                var c = unwrap(beforeNode);
+                if (c) {
+                    first.insertBefore(n, c);
+                } else {
+                    first.appendChild(n);
+                }
+            });
         } else {
             this.prepend(insertNode);
         }
@@ -291,14 +327,22 @@ Set.prototype = {
     
     listen: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
-            n.addEventListener(name, fn, capture);
+            if (has("dom-addeventlistener")) {
+                n.addEventListener(name, fn, capture);
+            } else {
+                n.attachEvent(name, fn);
+            }
         });
         return this;
     },
     
     unlisten: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
-            n.removeEventListener(name, fn, capture);
+            if (has("dom-addeventlistener")) {
+                n.removeEventListener(name, fn, capture);
+            } else {
+                n.detachEvent(name, fn);
+            }
         });
         return this;
     }

@@ -136,13 +136,13 @@ Tag.prototype = {
         this.generateMarkup(topBlock, topOuts, blocks, info, true, lhs);
         this.addCode(topBlock, topOuts, blocks);
 
-        var fnBlock = ['(function (__context__, __args__, __code__, __out__'];
+        var fnBlock = ['(function() { return function (__context__, __args__, __code__, __out__'];
         for (var i = 0; i < info.argIndex; ++i) {
             fnBlock.push(', s', i);
         }
         fnBlock.push(') {');
         fnBlock.push.apply(fnBlock, blocks);
-        fnBlock.push('})');
+        fnBlock.push('};})()');
 
         var sandbox = {
             NoInit: NoInit,
@@ -462,7 +462,7 @@ Tag.prototype = {
 
         var nodeCount = this.generateDOM(path, blocks, this.staticDOMArgs, []);
 
-        var fnBlock = ['(function (root, o'];
+        var fnBlock = ['(function() { return function (root, o'];
         for (var i = 0; i < path.staticIndex; ++i)
             fnBlock.push(', ', 's'+i);
         for (var i = 0; i < path.renderIndex; ++i)
@@ -479,7 +479,7 @@ Tag.prototype = {
         fnBlock.push(blocks.join(""));
 
         fnBlock.push('  return ', nodeCount, ';');
-        fnBlock.push('})');
+        fnBlock.push('};})()');
 
         var sandbox = {
             NoInit: NoInit,
@@ -546,11 +546,11 @@ Tag.prototype = {
                 } else {
                     node.addEventListener(name, cb, false);
                 }
-            },
+            }
         };
         
         var js = fnBlock.join("");
-        // console.log(js.replace(/(\;|\{)/g, "$1\n"));
+        //console.log(js.replace(/(\;|\{)/g, "$1\n"));
         this.renderDOM = sandboxEval(js, sandbox);
     },
 
@@ -681,8 +681,10 @@ Tag.prototype = {
         if (!parent && firstChild) {
             var womb = firstChild.parentNode;
             var nodes = _.slice(womb.childNodes);
-            womb.innerHTML = '';
-            return nodes.length > 1 ? nodes : nodes[0];
+            var result = nodes.length > 1 ? nodes : nodes[0];
+            // womb.innerHTML = '';
+            womb.removeChild(result);
+            return result;
         }
     }    
 };
@@ -976,7 +978,7 @@ function parseParts(str) {
         var segs = m[1].split("|");
         var vars = segs[0].split(",$");
 
-        parts.push(new Variables(vars, segs.splice(1)));
+        parts.push(new Variables(vars, segs.slice(1)));
         
         index = re.lastIndex;
     }
@@ -1149,7 +1151,7 @@ function TagSet() {}
 TagSet.prototype = _.extend($.Set.prototype, {
     slots: function() {
         return _.map(this.nodes, function(n) { return n.__slot__ ? n.__slot__ : n; });
-    },
+    }
 });
 
 // *************************************************************************************************
