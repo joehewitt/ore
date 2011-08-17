@@ -329,7 +329,7 @@ Set.prototype = {
        _.each(this.nodes, function(n) {
             if (has("dom-addeventlistener")) {
                 n.addEventListener(name, fn, capture);
-            } else {
+            } else if (n.attachEvent) {
                 n.attachEvent(name, fn);
             }
         });
@@ -340,7 +340,7 @@ Set.prototype = {
        _.each(this.nodes, function(n) {
             if (has("dom-addeventlistener")) {
                 n.removeEventListener(name, fn, capture);
-            } else {
+            } else if (n.detachEvent) {
                 n.detachEvent(name, fn);
             }
         });
