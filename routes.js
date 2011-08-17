@@ -11,6 +11,7 @@ var mainView = null;
 var currentLocation;
 var nextScroll;
 var historyIndex;
+var realScroll = 0;
 
 if (has('native-sessionstorage')) {
     historyIndex = !sessionStorage.scrollIndex ? 0 : parseInt(sessionStorage.scrollIndex);
@@ -115,6 +116,13 @@ require.ready(function() {
         pushScroll(true);
     });
 
+    $(window).listen('scroll', function(event) {
+        // I only to do this because Firefox restores scrollY when going back before the popstate
+        // event fires, so I have no opportunity to save the current scrollY myself before it is
+        // wiped out.  I think this is a "feature"
+        realScroll = window.scrollY;
+    });
+
     $(window).listen('popstate', function(event) {
         var referer = event.state ? event.state.referer : '';
         if (currentLocation != location.href) {
@@ -138,7 +146,7 @@ require.ready(function() {
 function pushScroll(replace) {
     if (has('native-sessionstorage')) {
         var scrolls = sessionStorage.scroll ? JSON.parse(sessionStorage.scroll) : [];
-        scrolls[historyIndex] = window.scrollY;
+        scrolls[historyIndex] = realScroll;
         if (!replace || !scrolls.length) {
             sessionStorage.scrollIndex = ++historyIndex;
             scrolls.splice(historyIndex, scrolls.length-historyIndex, 0);
@@ -153,7 +161,7 @@ function popScroll(forward, goToIndex) {
         if (sessionStorage.scroll) {
             var scrolls = JSON.parse(sessionStorage.scroll);
             if (currentLocation) {
-                scrolls[historyIndex] = window.scrollY;
+                scrolls[historyIndex] = realScroll;
             }
             if (goToIndex !== undefined) {
                 historyIndex = goToIndex;
@@ -171,7 +179,7 @@ function popScroll(forward, goToIndex) {
     }
 }
 
-function syncScroll(forward) {
+function syncScroll() {
     if (has('native-sessionstorage')) {
         if (sessionStorage.scroll) {
             var scrolls = JSON.parse(sessionStorage.scroll);

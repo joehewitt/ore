@@ -43,13 +43,14 @@ exports.getJSON = function(url, params, cb) {
     } else {
         var script = document.createElement('script');
         script.type = 'text/javascript';
+        // script.async = true;
         script.src = url;
         script.onload = script.onerror = function(event) {
             if (script.parentNode) {
                 script.parentNode.removeChild(script);
             }
         };
-        document.body.appendChild(script);
+        document.head.appendChild(script);
     }
 }
 
