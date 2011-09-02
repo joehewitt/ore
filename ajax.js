@@ -29,11 +29,15 @@ exports.getJSON = function(url, params, cb) {
 
     window.jsonp = function(o) {
         window.jsonp = undefined;
-        cb(0, o);
+        if (o.error) {
+            cb(o);        
+        } else {
+            cb(0, o);
+        }
     }
 
     if (has('appjs')) {
-        appjs.load(url, function(err, data) {
+        appjs.load(url, 'GET', {}, params, function(err, data) {
             if (err) {
                 cb(err);            
             } else {
@@ -41,14 +45,20 @@ exports.getJSON = function(url, params, cb) {
             }
         });
     } else {
+        function cleanup() {
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }            
+        }
+
         var script = document.createElement('script');
         script.type = 'text/javascript';
         // script.async = true;
         script.src = url;
-        script.onload = script.onerror = function(event) {
-            if (script.parentNode) {
-                script.parentNode.removeChild(script);
-            }
+        script.onload = cleanup;
+        script.onerror = function(event) {
+            cleanup();
+            cb("Error");
         };
         document.head.appendChild(script);
     }
