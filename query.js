@@ -2,6 +2,7 @@
 
 has("string-trim");
 // has("dom-queryselector");
+has("dom-addeventlistener");
 
 var _ = require('./iter');
 
@@ -211,7 +212,7 @@ Set.prototype = {
         if (value === undefined) {
             return this.nodes[0].innerHTML;
         } else {
-           _.each(this.nodes, function(n) {
+            _.each(this.nodes, function(n) {
                 n.innerHTML = value;
             });
             return this;

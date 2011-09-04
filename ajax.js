@@ -27,16 +27,18 @@ exports.getJSON = function(url, params, cb) {
         url = url + (url.indexOf('?') == -1 ? '?' : '&') + pairs.join('&');
     }
 
-    window.jsonp = function(o) {
+    function jsonpReturn(o) {
         window.jsonp = undefined;
         if (o.error) {
             cb(o);        
         } else {
             cb(0, o);
-        }
+        }        
     }
 
     if (has('appjs')) {
+        window.jsonp = jsonpReturn;
+
         appjs.load(url, 'GET', {}, params, function(err, data) {
             if (err) {
                 cb(err);            
@@ -45,6 +47,13 @@ exports.getJSON = function(url, params, cb) {
             }
         });
     } else {
+        window.jsonp = function(o) {
+            // Return on a timeout to ensure that getJSON calls return asynchronously. There
+            // is a case in IE where, after hitting the back button, this will return
+            // synchronously and potentially confuse some clients.
+            setTimeout(function() { jsonpReturn(o) }, 0);
+        }
+
         function cleanup() {
             if (script.parentNode) {
                 script.parentNode.removeChild(script);
@@ -60,7 +69,8 @@ exports.getJSON = function(url, params, cb) {
             cleanup();
             cb("Error");
         };
-        document.head.appendChild(script);
+        var head = document.getElementsByTagName("head")[0];
+        head.appendChild(script);
     }
 }
 
