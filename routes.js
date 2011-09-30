@@ -40,7 +40,7 @@ function match(path) {
     }
 }
 
-function update(path, action, goToIndex) {
+function update(path, action, goToIndex, ignoreErrors) {
     var m = match(path);
     if (m) {
         D&&D(action);
@@ -57,7 +57,7 @@ function update(path, action, goToIndex) {
         }
 
         m.route.callback(m.args.slice(1), action == BACK);
-    } else {
+    } else if (!ignoreErrors) {
         if (exports.errorHandler) {
             exports.errorHandler([404]);
         }
@@ -95,18 +95,20 @@ require.ready(function() {
 
                 if (link.val() && link.prop('hostname') == window.location.hostname
                     && !link.prop('target')) {
-                    event.preventDefault();
-
                     if (link.attr('type') == 'action') {
+                        event.preventDefault();
                         
                     } else if (link.attr('type') == 'replace') {
                         currentLocation = link.attr('href');
                         history.replaceState({referer: location.href, id: historyIndex}, '', currentLocation);
                         update(location.pathname, REPLACE);
+                        event.preventDefault();
                     } else {
                         currentLocation = link.attr('href');
                         history.pushState({referer: location.href, id: historyIndex}, '', currentLocation);
-                        update(location.pathname, PUSH);
+                        if (update(location.pathname, PUSH, 0, true)) {
+                            event.preventDefault();                    
+                        }
                     }
                 }
             }
