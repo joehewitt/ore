@@ -259,11 +259,13 @@ Set.prototype = {
             if (typeof value === "number" && !cssNumber[name]) {
                 value += "px";
             }
-            if (!value) {
-                this.nodes[0].style.removeProperty(name);
-            } else {
-                this.nodes[0].style[toCamelCase(name)] = value;
-            }
+           _.each(this.nodes, function(n) {
+                if (!value) {
+                    n.style.removeProperty(name);
+                } else {
+                    n.style[toCamelCase(name)] = value;
+                }
+            });
         }
         return this;
     },
@@ -299,16 +301,16 @@ Set.prototype = {
     },
     
     width: function() {
-        return this.nodes[0].offsetWidth;
+        return this.nodes.length ? this.nodes[0].offsetWidth : 0;
     },
 
     height: function() {
-        return this.nodes[0].offsetHeight;
+        return this.nodes.length ? this.nodes[0].offsetHeight : 0;
     },
 
     offset: function() {
         var rect = this.nodes[0].getBoundingClientRect();
-         return {
+        return {
              left: rect.left + document.body.scrollLeft,
              top: rect.top + document.body.scrollTop,
              width: rect.width,

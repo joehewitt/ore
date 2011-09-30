@@ -93,7 +93,8 @@ require.ready(function() {
             if (event.button == 0 && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
                 var link = $(event.target).closest('a');
 
-                if (link.val() && link.prop('hostname') == window.location.hostname) {
+                if (link.val() && link.prop('hostname') == window.location.hostname
+                    && !link.prop('target')) {
                     event.preventDefault();
 
                     if (link.attr('type') == 'action') {
@@ -203,3 +204,4 @@ exports.push = push;
 exports.pop = pop;
 exports.update = update;
 exports.setMainView = setMainView;
+
