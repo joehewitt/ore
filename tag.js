@@ -681,7 +681,7 @@ Tag.prototype = {
 
         if (!parent && firstChild) {
             var womb = firstChild.parentNode;
-            var nodes = _.rest(womb.childNodes, 0);
+            var nodes = $.slice(womb.childNodes, 0);
             var result = nodes.length > 1 ? nodes : nodes[0];
             // womb.innerHTML = '';
             womb.removeChild(result);

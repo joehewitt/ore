@@ -26,7 +26,7 @@ function query(selector, context) {
             return wrapSet([document.getElementById(selector.substr(1))]);
         } else {
             var node = context ? unwrap(context) : document;
-            return wrapSet(_.rest(node.querySelectorAll
+            return wrapSet(query.slice(node.querySelectorAll
                 ? node.querySelectorAll(selector)
                 : document.querySelectorAll.call(node, selector)), 0);
         }
@@ -35,9 +35,16 @@ function query(selector, context) {
     }
 }
 
+module.exports = query;
+
+// *************************************************************************************************
+
 _.extend(query, events);
 
-module.exports = query;
+var slice = Array.prototype.slice;
+query.slice = function(a, i) {
+    return slice.call(a, i);
+}
 
 // *************************************************************************************************
 
