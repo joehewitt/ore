@@ -4,7 +4,8 @@ has("string-trim");
 // has("dom-queryselector");
 has("dom-addeventlistener");
 
-var _ = require('./iter');
+var _ = require('underscore'),
+    events = require('./events');
 
 var cssNumber = {
     zIndex: true,
@@ -25,14 +26,16 @@ function query(selector, context) {
             return wrapSet([document.getElementById(selector.substr(1))]);
         } else {
             var node = context ? unwrap(context) : document;
-            return wrapSet(_.slice(node.querySelectorAll
+            return wrapSet(_.rest(node.querySelectorAll
                 ? node.querySelectorAll(selector)
-                : document.querySelectorAll.call(node, selector)));
+                : document.querySelectorAll.call(node, selector)), 0);
         }
     } else {
         return wrap(selector);
     }
 }
+
+_.extend(query, events);
 
 module.exports = query;
 

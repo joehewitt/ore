@@ -10,6 +10,8 @@
   "author": "Joe Hewitt <joe@joehewitt.com>",
   "contributors": [],
   "dependencies": {
+      "fool": "",
+      "underscore": ""
   },
   "version": "0.0.1",
   "main": "./ore",

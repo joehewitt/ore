@@ -1,5 +1,6 @@
 
-var _ = require('./iter'),
+var _ = require('underscore'),
+    fool = require('fool'),
     $ = require('./query'),
     events = require('./events');
 
@@ -680,7 +681,7 @@ Tag.prototype = {
 
         if (!parent && firstChild) {
             var womb = firstChild.parentNode;
-            var nodes = _.slice(womb.childNodes);
+            var nodes = _.rest(womb.childNodes, 0);
             var result = nodes.length > 1 ? nodes : nodes[0];
             // womb.innerHTML = '';
             womb.removeChild(result);
@@ -693,7 +694,7 @@ Tag.prototype = {
 
 function Embed() {}
 
-Embed.prototype = _.subclass(Tag, {
+Embed.prototype = fool.subclass(Tag, {
     merge: function(value, params) {
         this.value = parseValue(value);
         this.params = {};
@@ -757,7 +758,7 @@ function Loop() {
     this.children = [];
 }
 
-Loop.prototype = _.subclass(Tag, {
+Loop.prototype = fool.subclass(Tag, {
     merge: function(varName, iter, children) {
         this.varName = varName;
         this.iter = parseValue(iter);
@@ -856,7 +857,7 @@ function If() {
     this.children = [];
 }
 
-If.prototype = _.subclass(Tag, {
+If.prototype = fool.subclass(Tag, {
     merge: function(condition, children) {
         this.booleanVar = parseValue(condition);
         parseChildren(children, this.vars, this.symbols, this.children);
@@ -1171,10 +1172,10 @@ function createTag(base) {
     
     if (typeof(base) == 'string') {
         cons.tag = new Tag(base);
-        cons.prototype = _.subclass(TagSet);
+        cons.prototype = fool.subclass(TagSet);
     } else {
         cons.tag = new Tag(base.tagName, base);
-        cons.prototype = _.subclass(base.cons);
+        cons.prototype = fool.subclass(base.cons);
     }
     cons.tag.cons = cons;
     return cons;
@@ -1182,7 +1183,7 @@ function createTag(base) {
 
 function EMBED() {
     function cons() {}
-    cons.prototype = _.subclass(TagSet);
+    cons.prototype = fool.subclass(TagSet);
     var tag = new Embed();
     tag.merge.apply(tag, arguments);
     cons.tag = tag;
@@ -1195,7 +1196,7 @@ function FOR() {
             cons.tag.instantiate(this, params, context, noInit);
         }
     }
-    cons.prototype = _.subclass(TagSet);
+    cons.prototype = fool.subclass(TagSet);
     var tag = new Loop();
     tag.merge.apply(tag, arguments);
     cons.tag = tag;
@@ -1204,7 +1205,7 @@ function FOR() {
 
 function IF() {
     function cons() {}
-    cons.prototype = _.subclass(TagSet);
+    cons.prototype = fool.subclass(TagSet);
     var tag = new If();
     tag.merge.apply(tag, arguments);
     cons.tag = tag;
