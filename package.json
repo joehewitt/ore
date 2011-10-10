@@ -1,6 +1,7 @@
 {
   "name": "ore",
-  "description": "Ore library",
+  "description": "Foundations for reusable web components.",
+  "version": "0.0.1",
   "homepage": "http://github.com/joehewitt/ore",
   "repository": {
       "type": "git",
@@ -13,7 +14,6 @@
       "fool": "",
       "underscore": ""
   },
-  "version": "0.0.1",
   "main": "./ore",
   "directories": {},
   "engines": { "node": ">=0.4.0" }
