@@ -196,6 +196,12 @@ Set.prototype = {
         return this;
     },
 
+    replace: function(replaceNode) {
+        var first = this.slots()[0];
+        act(replaceNode, function action(n) { first.parentNode.replaceChild(n, first); });
+        return this;
+    },
+
     remove: function() {
        _.each(this.nodes, function(n) {
             n.parentNode.removeChild(n);
