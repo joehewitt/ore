@@ -1,20 +1,23 @@
 {
   "name": "ore",
   "description": "Foundations for reusable web components.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "homepage": "http://github.com/joehewitt/ore",
   "repository": {
-      "type": "git",
-      "url" : "http://github.com/joehewitt/ore.git"
+    "type": "git",
+    "url": "git://github.com/joehewitt/ore.git"
   },
   "keywords": [],
   "author": "Joe Hewitt <joe@joehewitt.com>",
   "contributors": [],
   "dependencies": {
-      "fool": "",
-      "underscore": ""
+    "fool": "",
+    "underscore": ""
   },
   "main": "./ore",
   "directories": {},
-  "engines": { "node": ">=0.4.0" }
+  "engines": {
+    "node": ">=0.4.0"
+  },
+  "devDependencies": {}
 }
