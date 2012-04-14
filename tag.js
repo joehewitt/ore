@@ -1103,14 +1103,23 @@ function addParts(val, delim, lead, block, info, escapeIt, lhs) {
                 // This is fine as we are not passing it to a function and only displaying it.
                 var partName = getName(part.names[0], lhs);
                 if (part.format) {
+                    var partNames = [];
+                    for (var j = 0; j < part.names.length; ++j) {
+                        partNames.push(getName(part.names[j], lhs));
+                    }
                     for (var j = 0; j < part.format.length; ++j) {
                         var format = part.format[j];
                         if (format == 'html') {
                             escapeIt = false;
                         } else {
-                            partName = getName(format, lhs) + "(" + partName + ")";
+                            partName = getName(format, lhs) + "("
+                                + (partNames ? partNames.join(',') : partName)
+                                + ")";
+                            partNames = null;
                         }
                     }
+                } else {
+                    partName = getName(part.names[0], lhs)
                 }
 
                 if (escapeIt)
