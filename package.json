@@ -1,7 +1,7 @@
 {
   "name": "ore",
   "description": "Foundations for reusable web components.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "homepage": "http://github.com/joehewitt/ore",
   "repository": {
     "type": "git",
@@ -19,5 +19,6 @@
   "engines": {
     "node": ">=0.4.0"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "optionalDependencies": {}
 }
