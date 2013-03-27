@@ -129,6 +129,14 @@ Set.prototype = {
         });
         return wrapSet(children);
     },
+
+    clone: function(deep) {
+        var clones = [];
+       _.each(this.nodes, function(n) {
+            clones.push(n.cloneNode(deep));
+        });
+        return wrapSet(clones);
+    },
     
     addClass: function(name) {
        _.each(this.nodes, function(n) {
@@ -196,7 +204,7 @@ Set.prototype = {
         return this;
     },
 
-    replace: function(replaceNode) {
+    replaceWith: function(replaceNode) {
         var first = this.slots()[0];
         act(replaceNode, function action(n) { first.parentNode.replaceChild(n, first); });
         return this;
@@ -208,7 +216,7 @@ Set.prototype = {
         });
         return this;
     },
-    
+
     empty: function() {
         _.each(this.slots(), function(n) {
              n.innerHTML = '';
