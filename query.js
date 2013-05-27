@@ -122,6 +122,22 @@ Set.prototype = {
         return wrapSet(children);
     },
     
+    next: function() {
+        var children = [];
+       _.each(this.slots(), function(n) {
+            children.push(n.nextSibling);
+        });
+        return wrapSet(children);
+    },
+    
+    previous: function() {
+        var children = [];
+       _.each(this.slots(), function(n) {
+            children.push(n.previousSibling);
+        });
+        return wrapSet(children);
+    },
+    
     child: function(index) {
         var children = [];
        _.each(this.slots(), function(n) {
@@ -167,7 +183,7 @@ Set.prototype = {
     },
 
     appendTo: function(target) {
-        $(target).append(this);
+        wrap(target).append(this);
         return this;
     },
 
@@ -332,6 +348,14 @@ Set.prototype = {
         return this.nodes.length ? this.nodes[0].offsetHeight : 0;
     },
 
+    contentWidth: function() {
+        return this.nodes.length ? this.nodes[0].clientWidth : 0;
+    },
+
+    contentHeight: function() {
+        return this.nodes.length ? this.nodes[0].clientHeight : 0;
+    },
+
     offset: function() {
         var rect = this.nodes[0].getBoundingClientRect();
         return {
@@ -354,7 +378,14 @@ Set.prototype = {
     
     listen: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
-            if (has("dom-addeventlistener")) {
+            var node = query(n);
+            var e = node[name];
+            if (e == events.event) {
+                e = node[name] = e.create();
+            }
+            if (e && e.addListener) {
+                e.addListener(fn);
+            } else if (has("dom-addeventlistener")) {
                 n.addEventListener(name, fn, capture);
             } else if (n.attachEvent) {
                 n.attachEvent(name, fn);
@@ -386,6 +417,8 @@ function wrap(node) {
         return new Set([]);
     } else if (node.ore) {
         return node.ore;
+    } else if (node.nodes) {
+        return node;
     } else {
         return new Set([node]);
     }

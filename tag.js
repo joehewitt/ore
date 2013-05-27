@@ -1173,7 +1173,7 @@ function createTag(base) {
         } else {
             var cons2 = createTag(cons.tag);
             var definition = cons2.tag.merge.apply(cons2.tag, arguments);
-            _.extend(cons2.prototype, definition);
+            fool.extend(cons2.prototype, definition);
             cons2.prototype.ready ? cons2.prototype.ready.apply(cons2.prototype, [cons2]) : 0;
             return cons2;
         }
