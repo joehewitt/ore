@@ -5,14 +5,18 @@ has("string-trim");
 has("dom-addeventlistener");
 
 var _ = require('underscore'),
-    events = require('./events');
+    fool = require('fool'),
+    events = require('./events'),
+    bindings = require('./bindings'),
+    Bindable = bindings.Bindable;
 
 var cssNumber = {
-    zIndex: true,
-    fontWeight: true,
+    'z-index': true,
+    '-webkit-box-flex': true,
+    'font-weight': true,
     opacity: true,
     zoom: true,
-    lineHeight: true
+    'line-height': true
 };
 
 // *************************************************************************************************
@@ -40,6 +44,7 @@ module.exports = query;
 // *************************************************************************************************
 
 _.extend(query, events);
+_.extend(query, bindings);
 
 var slice = Array.prototype.slice;
 query.slice = function(a, i) {
@@ -55,7 +60,7 @@ function Set(source, selector) {
 }
 query.Set = Set;
 
-Set.prototype = {
+Set.prototype = fool.subclass(Bindable, {
     // Used internally
     assign: function(element) {
         this.nodes = unwrapSet(element);
@@ -228,7 +233,9 @@ Set.prototype = {
 
     remove: function() {
        _.each(this.nodes, function(n) {
-            n.parentNode.removeChild(n);
+            if (n.parentNode) {
+                n.parentNode.removeChild(n);
+            }
         });
         return this;
     },
@@ -310,6 +317,15 @@ Set.prototype = {
         return this;
     },
     
+    style: function(name, value) {
+        if (value === undefined) {
+            return this.nodes.length ? getComputedStyle(this.nodes[0])[toCamelCase(name)] : undefined;
+        } else if (this.nodes.length) {
+            return this.css(name, value);
+        }
+        return this;
+    },
+    
     scrollTop: function(val) {
         if (val === undefined) {
             return this.nodes[0].scrollTop;
@@ -338,6 +354,24 @@ Set.prototype = {
     
     scrollHeight: function() {
         return this.nodes[0].scrollHeight;
+    },
+
+    flex: function(flex) {
+        if (flex === undefined) {
+            return this.style('-webkit-box-flex');
+        } else {
+            this.css('-webkit-box-flex', flex);
+            return this;
+        }
+    },
+
+    orient: function(orient) {
+        if (orient === undefined) {
+            return this.style('-webkit-box-orient');
+        } else {
+            this.css('-webkit-box-orient', orient);
+            return this;
+        }
     },
     
     width: function() {
@@ -404,7 +438,7 @@ Set.prototype = {
         });
         return this;
     }
-};
+});
 
 // *************************************************************************************************
 

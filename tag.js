@@ -17,6 +17,7 @@ function Tag(tagName, baseTag) {
     this.styles = null;
     this.props = null;
     this.listeners = null;
+    this.bindings = null;
     this.children = [];
     this.vars = baseTag ? _.clone(baseTag.vars) : [];
     this.symbols = baseTag ? _.clone(baseTag.symbols) : {};
@@ -24,6 +25,7 @@ function Tag(tagName, baseTag) {
     this.hasClasses = baseTag ? baseTag.hasClasses : false;
     this.hasStyles = baseTag ? baseTag.hasStyles : false;
     this.hasListeners = baseTag ? baseTag.hasListeners : false;
+    this.hasBindings = baseTag ? baseTag.hasBindings : false;
     this.hasProps = baseTag ? baseTag.hasProps : false;
     this.hasDefinition = baseTag ? baseTag.hasDefinition : false;
 }
@@ -102,6 +104,12 @@ Tag.prototype = {
                     this.hasClasses = true;
                 }
                 this.classes[className] = val;
+            } else if (name[0] == "@") {                
+                var bindingName = name.substr(1);
+                if (!this.bindings)
+                    this.bindings = [];
+                this.bindings.push(bindingName, val);
+                this.hasBindings = true;
             } else {
                 if (name == "class" && this.attrs.hasOwnProperty(name)) {
                     this.attrs[name] += " " + val;
@@ -547,6 +555,10 @@ Tag.prototype = {
                 } else {
                     node.addEventListener(name, cb, false);
                 }
+            },
+
+            __bind__: function(node, object, propName, keyName) {
+                object.addBinding(propName, keyName);
             }
         };
         
@@ -558,7 +570,7 @@ Tag.prototype = {
     generateDOM: function(path, blocks, args, stack) {
         var thisName = 'this';
 
-        if (this.hasListeners || this.hasProps || this.hasDefinition) {
+        if (this.hasListeners || this.hasBindings || this.hasProps || this.hasDefinition) {
             this.addNodePath(path, blocks);
         }
         
@@ -573,6 +585,14 @@ Tag.prototype = {
                     var arg = generateArg(val, path, args);
                     blocks.push('__listen__(node, ',thisName,', "', tag.listeners[i],
                                 '", _.bind(', arg, ', ', thisName, '));');
+                }
+            }
+            if (tag.bindings) {
+                for (var i = 0; i < tag.bindings.length; i += 2) {
+                    var val = tag.bindings[i+1];
+                    var arg = generateArg(val, path, args);
+                    blocks.push('__bind__(node, ',thisName,', "', tag.bindings[i],
+                                '", ', arg, ');');
                 }
             }
         }
@@ -1158,10 +1178,10 @@ function isTag(obj) {
 
 function TagSet() {}
 
-TagSet.prototype = _.extend($.Set.prototype, {
+TagSet.prototype = fool.subclass($.Set, {
     slots: function() {
         return _.map(this.nodes, function(n) { return n.__slot__ ? n.__slot__ : n; });
-    }
+    },
 });
 
 // *************************************************************************************************
@@ -1186,6 +1206,11 @@ function createTag(base) {
         cons.tag = new Tag(base.tagName, base);
         cons.prototype = fool.subclass(base.cons);
     }
+
+    cons.isTypeOf = function(otherType) {
+        return this.tag.baseClass.tag == otherType.tag;
+    }
+
     cons.tag.cons = cons;
     return cons;
 }
