@@ -468,6 +468,7 @@ Tag.prototype = {
         path.ifIndex = 0;
         path.staticIndex = 0;
         path.renderIndex = 0;
+        path.nodeIndex = 0;
 
         var nodeCount = this.generateDOM(path, blocks, this.staticDOMArgs, []);
 
@@ -563,27 +564,30 @@ Tag.prototype = {
         };
         
         var js = fnBlock.join("");
-        //console.log(js.replace(/(\;|\{)/g, "$1\n"));
+        // console.log(js.replace(/(\;|\{)/g, "$1\n"));
         this.renderDOM = sandboxEval(js, sandbox);
     },
 
     generateDOM: function(path, blocks, args, stack) {
         var thisName = 'this';
+        var nodeName = 'n' + path.nodeIndex++;
 
         if (this.hasListeners || this.hasBindings || this.hasProps || this.hasDefinition) {
-            this.addNodePath(path, blocks);
+            this.addNodePath(nodeName, path, blocks);
         }
         
         if (this.hasDefinition) {
             thisName = 'd' + path.renderIndex++;
+            blocks.push(thisName + '.assign('+nodeName+');');
         }
         
+
         for (var tag = this; tag; tag = tag.baseTag) {
             if (tag.listeners) {
                 for (var i = 0; i < tag.listeners.length; i += 2) {
                     var val = tag.listeners[i+1];
                     var arg = generateArg(val, path, args);
-                    blocks.push('__listen__(node, ',thisName,', "', tag.listeners[i],
+                    blocks.push('__listen__(',nodeName, ',',thisName,', "', tag.listeners[i],
                                 '", _.bind(', arg, ', ', thisName, '));');
                 }
             }
@@ -591,36 +595,40 @@ Tag.prototype = {
                 for (var i = 0; i < tag.bindings.length; i += 2) {
                     var val = tag.bindings[i+1];
                     var arg = generateArg(val, path, args);
-                    blocks.push('__bind__(node, ',thisName,', "', tag.bindings[i],
+                    blocks.push('__bind__(',nodeName,', ',thisName,', "', tag.bindings[i],
                                 '", ', arg, ');');
                 }
             }
         }
 
+        var propBlocks = [];
         for (var tag = this; tag; tag = tag.baseTag) {
             if (tag.props) {
                 for (var name in tag.props) {
                     var val = tag.props[name];
                     var arg = generateArg(val, path, args);
                     if (tag.hasDefinition) {
-                        blocks.push(thisName+'.', name, ' = ', arg, ';');
+                        propBlocks.push(thisName+'.', name, ' = ', arg, ';');
                     } else {
-                        blocks.push('node.', name, ' = ', arg, ';');
+                        propBlocks.push(nodeName,'.', name, ' = ', arg, ';');
                     }
                 }
             }
         }
-        
-        if (this.hasDefinition) {
-            blocks.push(thisName + '.assign(node);');
-        }
 
         this.generateChildDOM(path, blocks, args, stack, thisName);
+        
+        blocks.push.apply(blocks, propBlocks);
+
+        if (this.hasDefinition) {
+            blocks.push(thisName + '.init();');
+        }
+
         return 1;
     },
 
-    addNodePath: function(path, blocks) {
-        blocks.push("        node = " + generateNodePath(path) + ';');
+    addNodePath: function(nodeName, path, blocks) {
+        blocks.push("        var " + nodeName + " = " + generateNodePath(path) + ';');
     },
 
     generateChildDOM: function(path, blocks, args, stack, thisName) {
@@ -759,13 +767,14 @@ Embed.prototype = fool.subclass(Tag, {
 
     generateDOM: function(path, blocks, args, stack) {
         var embedName = 'e'+path.embedIndex++;
-
-        this.addNodePath(path, blocks);
-
+        var nodeName = 'n'+path.nodeIndex++;
         var valueName = 'd' + path.renderIndex++;
         var argsName = 'd' + path.renderIndex++;
+
+        this.addNodePath(nodeName, path, blocks);
         
-        blocks.push('        ',embedName + ' = __embed__(node, ', valueName, ', ', argsName, ');');
+        blocks.push('        ',embedName + ' = __embed__(',nodeName, ',', valueName, ', ',
+                    argsName, ');');
 
         return embedName;
     }

@@ -68,17 +68,21 @@ Set.prototype = fool.subclass(Bindable, {
         if (this.nodes.length == 1) {
             element.ore = this;
         }
+    },
+    
+    init: function() {
         this.construct();
+        this.ready = true;
+    },
+
+    construct: function() {
+        // Meant to be overriden by subclasses
     },
       
     query: function(selector) {
         return query(selector, this);
     },
     
-    construct: function() {
-        // Meant to be overriden by subclasses
-    },
-      
     each: function(callback) {
         return _.each(this.nodes, function(n) { return callback(wrap(n)); });
     },
@@ -89,6 +93,22 @@ Set.prototype = fool.subclass(Bindable, {
             n = n.parentNode;
         }
         return wrap(n && !(n === document) ? n : null);
+    },
+
+    contains: function(containedNode) {
+        if (containedNode instanceof Set) {
+            containedNode = containedNode.val();
+        }
+        for (var i = 0, l = this.nodes.length; i < l; ++i) {
+            var node = this.nodes[i];
+            while (node) {
+                if (node == containedNode) {
+                    return true;
+                }
+                node = node.parentNode;
+            }
+        }
+        return false;
     },
 
     chain: function() {
@@ -161,20 +181,22 @@ Set.prototype = fool.subclass(Bindable, {
     
     addClass: function(name) {
        _.each(this.nodes, function(n) {
-            !query(n).hasClass(name) && (n.className += (n.className ? ' ' : '') + name);
+            n.classList.add(name);
         });
         return this;
     },
 
     removeClass: function(name) {
        _.each(this.nodes, function(n) {
-            n.className = n.className.replace(classRE(name), ' ').trim();
+            n.classList.remove(name);
         });
         return this;
     },
 
     hasClass: function(name) {
-        return classRE(name).test(this.nodes[0].className);
+        if (this.length) {
+            return classRE(name).test(this.nodes[0].className);            
+        }
     },
     
     get: function(index) {
@@ -358,7 +380,7 @@ Set.prototype = fool.subclass(Bindable, {
 
     flex: function(flex) {
         if (flex === undefined) {
-            return this.style('-webkit-box-flex');
+            return parseFloat(this.style('-webkit-box-flex'));
         } else {
             this.css('-webkit-box-flex', flex);
             return this;

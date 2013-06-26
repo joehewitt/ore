@@ -4,7 +4,9 @@ function broadcaster() {}
 
 broadcaster.create = function() {
     function fn(event) {
-        fn.dispatch(event);
+        if (this.ready) {
+            fn.dispatch(event);            
+        }
     }
 
     var listeners;
