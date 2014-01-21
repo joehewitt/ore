@@ -12,7 +12,7 @@ var _ = require('underscore'),
 
 var cssNumber = {
     'z-index': true,
-    '-webkit-box-flex': true,
+    '-webkit-flex': true,
     'font-weight': true,
     opacity: true,
     zoom: true,
@@ -85,6 +85,18 @@ Set.prototype = fool.subclass(Bindable, {
     
     each: function(callback) {
         return _.each(this.nodes, function(n) { return callback(wrap(n)); });
+    },
+
+    filter: function(callback) {
+        return wrap(_.filter(this.nodes, function(n) { return callback(wrap(n)); }));
+    },
+
+    without: function(nodes) {
+        return wrap(_.without(this.nodes, unwrapSet(nodes)));
+    },
+
+    union: function(nodes) {
+        return wrap(_.union(this.nodes, unwrapSet(nodes)));
     },
 
     closest: function(selector) {
@@ -380,18 +392,18 @@ Set.prototype = fool.subclass(Bindable, {
 
     flex: function(flex) {
         if (flex === undefined) {
-            return parseFloat(this.style('-webkit-box-flex'));
+            return parseFloat(this.style('-webkit-flex'));
         } else {
-            this.css('-webkit-box-flex', flex);
+            this.css('-webkit-flex', flex);
             return this;
         }
     },
 
     orient: function(orient) {
         if (orient === undefined) {
-            return this.style('-webkit-box-orient');
+            return this.style('-webkit-flex-direction');
         } else {
-            this.css('-webkit-box-orient', orient);
+            this.css('-webkit-flex-direction', orient);
             return this;
         }
     },
@@ -475,6 +487,8 @@ function wrap(node) {
         return node.ore;
     } else if (node.nodes) {
         return node;
+    } else if (node instanceof Array) {
+        return new Set(unwrapArray(node));
     } else {
         return new Set([node]);
     }
@@ -498,6 +512,13 @@ function unwrapSet(node) {
     } else {
         return [];
     }
+}
+
+function unwrapArray(nodes) {
+    for (var i = 0, l = nodes.length; i < l; ++i) {
+        nodes[i] = unwrap(nodes[i]);
+    }
+    return nodes;
 }
 
 function act(target, action) {
