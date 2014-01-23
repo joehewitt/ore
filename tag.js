@@ -421,7 +421,9 @@ Tag.prototype = {
                     } else if (child == HERE) {
                         var outerL = info.stack[info.stack.length-1];
                         var outer = info.stack[info.stack.length-2];
-                        generateTag(outer, outerL, true);
+                        if (outer) {
+                            generateTag(outer, outerL, true);    
+                        }
                     } else {
                         addParts(child, ',', '', topBlock, info, true, lhs);
                     }
@@ -650,13 +652,20 @@ Tag.prototype = {
                         path[path.length-1] += '+'
                             + child.tag.generateDOM(path, blocks, args, stack);
                     } else if (child == HERE) {
-                        var outer = stack[stack.length-3];
-                        var t = stack[stack.length-2];
-                        var p = stack[stack.length-1];
-                        var thisPath = generateNodePath(path.slice(0, p));
-                        var slotPath = generateNodePath(path.slice(0, path.length-1));
-                        blocks.push(thisPath + '.__slot__ = ' + slotPath + ';')
-                        generateTag(outer, true);
+                        if (stack.length) {
+                            var outer = stack[stack.length-3];
+                            var t = stack[stack.length-2];
+                            var p = stack[stack.length-1];
+                            var thisPath = generateNodePath(path.slice(0, p));
+                            var slotPath = generateNodePath(path.slice(0, path.length-1));
+                            blocks.push(thisPath + '.__slot__ = ' + slotPath + ';')
+                            generateTag(outer, true);
+                        } else {
+                            var thisPath = generateNodePath(path.slice(0, path.length-2));
+                            var slotPath = generateNodePath(path.slice(0, path.length-1));
+                            D&&D(thisPath, slotPath);
+                            blocks.push(thisPath + '.__slot__ = ' + slotPath + ';')                            
+                        }
                     } else {
                         path[path.length-1] += '+1';
                     }

@@ -216,8 +216,8 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     append: function(target) {
-        var first = this.slots()[0];
-        act(target, function action(n) { first.appendChild(n); });
+        var slot = this.slots()[0];
+        act(target, function action(n) { slot.appendChild(n); });
         return this;
     },
 
@@ -227,8 +227,14 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     prepend: function(target) {
-        var first = this.slots()[0];
-        act(target, function action(n) { first.parentNode.insertBefore(n, first); });
+        var slot = this.slots()[0];
+        var first = wrap(slot).first();
+        if (first.length) {
+            first = first.nodes[0];
+            act(target, function action(n) { slot.insertBefore(n, first); });
+        } else {
+            act(target, function action(n) { slot.appendChild(n); });            
+        }
         return this;
     },
 
@@ -250,7 +256,7 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     after: function(insertNode, afterNode) {
-        if (afterNode && afterNode.nextSibling) {
+        if (afterNode && unwrap(afterNode).nextSibling) {
             var first = this.slots()[0];
             act(insertNode, function action(n) { first.insertBefore(n, unwrap(afterNode).nextSibling); });
         } else {
@@ -282,7 +288,7 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     slots: function() {
-        return this.nodes;
+        return _.map(this.nodes, function(n) { return n.__slot__ ? n.__slot__ : n; });
     },
     
     val: function() {
