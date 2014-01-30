@@ -663,7 +663,6 @@ Tag.prototype = {
                         } else {
                             var thisPath = generateNodePath(path.slice(0, path.length-2));
                             var slotPath = generateNodePath(path.slice(0, path.length-1));
-                            D&&D(thisPath, slotPath);
                             blocks.push(thisPath + '.__slot__ = ' + slotPath + ';')                            
                         }
                     } else {

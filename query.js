@@ -83,6 +83,20 @@ Set.prototype = fool.subclass(Bindable, {
         return query(selector, this);
     },
     
+    equals: function(otherSet) {
+        if (this.length == otherSet.length) {
+            var nodes = this.nodes;
+            var others = otherSet.nodes;
+            for (var i = 0, l = nodes.length; i < l; ++i) {
+                if (nodes[i] != others[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    },
+
     each: function(callback) {
         return _.each(this.nodes, function(n) { return callback(wrap(n)); });
     },
