@@ -2,9 +2,9 @@
 
 function broadcaster() {}
 
-broadcaster.create = function() {
+broadcaster.create = function(already) {
     function fn(event) {
-        if (this.ready) {
+        if (already || this.ready) {
             fn.dispatch(event);            
         }
     }
