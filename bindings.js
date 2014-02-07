@@ -9,7 +9,10 @@ exports.Binder = function() {
 }
 
 exports.Binder.prototype = {
-    persist: function() {
+    persist: function(storageKey) {
+        if (storageKey) {
+            this.storageKey = storageKey;   
+        }
         if (this.storageKey) {
             localStorage[this.storageKey] = JSON.stringify(this.values);
         }
