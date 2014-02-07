@@ -101,6 +101,10 @@ Set.prototype = fool.subclass(Bindable, {
         return _.each(this.nodes, function(n) { return callback(wrap(n)); });
     },
 
+    find: function(callback) {
+        return _.find(this.nodes, function(n) { return callback(wrap(n)); });
+    },
+
     filter: function(callback) {
         return wrap(_.filter(this.nodes, function(n) { return callback(wrap(n)); }));
     },
