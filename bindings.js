@@ -41,18 +41,40 @@ exports.Binder.prototype = {
             keyBindings = [];
             this.bindings[key] = keyBindings;
         }
-        keyBindings.push(object, property);
+        keyBindings.push({object: object, property: property});
     },
 
     unbind: function(key, object, property) {
         var keyBindings = this.bindings[key];
         if (keyBindings) {
             var newBindings = [];
-            for (var i = 0, l = keyBindings.length; i < l; i += 2) {
-                var bindingObject = keyBindings[i];
-                var bindingProperty = keyBindings[i+1];
-                if (!(bindingObject == bindingObject && bindingProperty == property)) {
-                    newBindings.push(bindingObject, bindingProperty);
+            for (var i = 0, l = keyBindings.length; i < l; ++i) {
+                var binding = keyBindings[i];
+                if (!(binding.object == object && binding.property == property)) {
+                    newBindings.push(binding);
+                }
+            }
+            this.bindings[key] = newBindings;
+        }
+    },
+
+    listen: function(key, listener) {
+        var keyBindings = this.bindings[key];
+        if (!keyBindings) {
+            keyBindings = [];
+            this.bindings[key] = keyBindings;
+        }
+        keyBindings.push({listener: listener});
+    },
+
+    unlisten: function(key, listener) {
+        var keyBindings = this.bindings[key];
+        if (keyBindings) {
+            var newBindings = [];
+            for (var i = 0, l = keyBindings.length; i < l; ++i) {
+                var binding = keyBindings[i];
+                if (binding.listener != listener) {
+                    newBindings.push(binding);
                 }
             }
             this.bindings[key] = newBindings
@@ -65,10 +87,13 @@ exports.Binder.prototype = {
             this.values[key] = value;
 
             var keyBindings = this.bindings[key];
-            for (var i = 0, l = keyBindings ? keyBindings.length : 0; i < l; i += 2) {
-                var bindingObject = keyBindings[i];
-                var bindingProperty = keyBindings[i+1];
-                bindingObject[bindingProperty] = value;
+            for (var i = 0, l = keyBindings ? keyBindings.length : 0; i < l; ++i) {
+                var binding = keyBindings[i];
+                if (binding.object) {
+                    binding.object[binding.property] = value;
+                } else {
+                    binding.listener(key, value);
+                }
             }
         }
 
