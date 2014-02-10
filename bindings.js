@@ -6,6 +6,7 @@ var _ = require('underscore');
 exports.Binder = function() {
     this.bindings = {};
     this.values = {};
+    this.disableListeners = false;
 }
 
 exports.Binder.prototype = {
@@ -29,10 +30,12 @@ exports.Binder.prototype = {
             values = {};
         }
 
+        this.disableListeners = true;
         for (var key in defaults) {
             var value = key in values ? values[key] : defaults[key];
             this.dispatch(key, value, true);
         }
+        this.disableListeners = false;
     },
 
     bind: function(key, object, property) {
@@ -87,11 +90,12 @@ exports.Binder.prototype = {
             this.values[key] = value;
 
             var keyBindings = this.bindings[key];
+            var disableListeners = this.disableListeners;
             for (var i = 0, l = keyBindings ? keyBindings.length : 0; i < l; ++i) {
                 var binding = keyBindings[i];
                 if (binding.object) {
                     binding.object[binding.property] = value;
-                } else {
+                } else if (!disableListeners) {
                     binding.listener(key, value);
                 }
             }
