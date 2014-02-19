@@ -2,6 +2,7 @@
 var _ = require('underscore'),
     fool = require('fool'),
     $ = require('./query'),
+    bindings = require('./bindings'),
     events = require('./events');
 
 var womb = null;
@@ -1206,7 +1207,10 @@ TagSet.prototype = fool.subclass($.Set, {
 function createTag(base) {
     function cons(params, context, noInit) {
         if (this instanceof cons) {
+            var previousBinder = bindings.binder;
+            bindings.binder = this.binder;
             cons.tag.instantiate(this, params, context, noInit);
+            bindings.binder = previousBinder;
         } else {
             var cons2 = createTag(cons.tag);
             var definition = cons2.tag.merge.apply(cons2.tag, arguments);

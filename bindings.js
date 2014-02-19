@@ -21,21 +21,29 @@ exports.Binder.prototype = {
 
     restore: function(storageKey, defaults) {
         this.storageKey = storageKey;
+
+        var values;
+        if (storageKey) {
+            values = localStorage[storageKey];
+            if (values) {
+                values = JSON.parse(values);
+            }
+        }
+
+        this.initialize(values || {}, defaults);
+    },
+
+    initialize: function(values, defaults) {
         this.values = {};
 
-        var values = localStorage[storageKey];
-        if (values) {
-            values = JSON.parse(values);
-        } else {
-            values = {};
-        }
+        var allKeys = _.extend(defaults, values);
 
-        this.disableListeners = true;
-        for (var key in defaults) {
+        // this.disableListeners = true;
+        for (var key in allKeys) {
             var value = key in values ? values[key] : defaults[key];
-            this.dispatch(key, value, true);
+            this.update(key, value, true);
         }
-        this.disableListeners = false;
+        // this.disableListeners = false;
     },
 
     bind: function(key, object, property) {
@@ -84,9 +92,9 @@ exports.Binder.prototype = {
         }
     },
 
-    dispatch: function(key, value, dontPersist) {
+    update: function(key, value, dontPersist) {
         var oldValue = this.values[key];
-        if (value != oldValue) {
+        if (value !== oldValue) {
             this.values[key] = value;
 
             var keyBindings = this.bindings[key];
@@ -107,8 +115,7 @@ exports.Binder.prototype = {
     }
 };
 
-var binder = new exports.Binder();
-exports.binder = binder;
+exports.binder = new exports.Binder();
 
 // *************************************************************************************************
 
@@ -117,14 +124,19 @@ exports.Bindable = function() {
 }
 
 exports.Bindable.prototype = {
-    addBinding: function(property, key) {
+    addBinding: function(property, key, binder) {
         if (!this.bindings) {
             this.bindings = {};
+        }  
+        if (!binder) {
+            binder = exports.binder;
         }
+
+        var binding = {key: key, binder: binder};
         if (property in this.bindings) {
-            this.bindings[property].push(key);
+            this.bindings[property].push(binding);
         } else {
-            var propertyBindings = [key];
+            var propertyBindings = [binding];
             this.bindings[property] = propertyBindings;
             binder.bind(key, this, property);
 
@@ -132,13 +144,19 @@ exports.Bindable.prototype = {
         }
     },
 
-    removeBinding: function(property, key) {
+    removeBinding: function(property, key, binder) {
+        if (!binder) {
+            binder = exports.binder;
+        }
         if (this.bindings && property in this.bindings) {
             var propertyBindings = this.bindings[property];
-            var index = propertyBindings.indexOf(key);
-            if (index != -1) {
-                propertyBindings.splice(index, 1);
-            }
+            for (var i = 0, l = propertyBindings.length; i < l; ++i) {
+                var binding = propertyBindings[i];
+                if (binding.key == key) {                    
+                    propertyBindings.splice(i, 1);
+                    --i;
+                }
+            }            
         }
         binder.unbind(key, this, property);
     },
@@ -156,8 +174,8 @@ function wrapProperty(object, property) {
             if (object.bindings && property in object.bindings) {
                 var propertyBindings = object.bindings[property]
                 for (var i = 0, l = propertyBindings.length; i < l; ++i) {
-                    var key = propertyBindings[i];
-                    binder.dispatch(key, value);
+                    var binding = propertyBindings[i];
+                    binding.binder.update(binding.key, value);
                 }
             }
 

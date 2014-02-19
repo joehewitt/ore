@@ -21,22 +21,30 @@ var cssNumber = {
 
 // *************************************************************************************************
 
+var rootNode = document;
+var rootDocument = document;
+
 function query(selector, context) {
     if (selector === 'body') {
-        return wrap(document.body);
+        return wrap(rootDocument.body);
     } else if (typeof selector === 'string') {
         if (!context && /^#([\w\-]+)$/.exec(selector)) {
             // Shortcut for getting element by id
-            return wrapSet([document.getElementById(selector.substr(1))]);
+            return wrapSet([rootNode.getElementById(selector.substr(1))]);
         } else {
-            var node = context ? unwrap(context) : document;
+            var node = context ? unwrap(context) : rootNode;
             return wrapSet(query.slice(node.querySelectorAll
                 ? node.querySelectorAll(selector)
-                : document.querySelectorAll.call(node, selector)), 0);
+                : rootNode.querySelectorAll.call(node, selector)), 0);
         }
     } else {
         return wrap(selector);
     }
+}
+
+query.setRoot = function(node) {
+    rootNode = node;
+    rootDocument = node.ownerDocument;
 }
 
 module.exports = query;
@@ -69,7 +77,7 @@ Set.prototype = fool.subclass(Bindable, {
             element.ore = this;
         }
     },
-    
+        
     init: function() {
         this.construct();
         this.ready = true;
@@ -122,7 +130,7 @@ Set.prototype = fool.subclass(Bindable, {
         while (n && nodes.indexOf(n) < 0) {
             n = n.parentNode;
         }
-        return wrap(n && !(n === document) ? n : null);
+        return wrap(n && !(n === rootNode) ? n : null);
     },
 
     contains: function(containedNode) {
@@ -285,7 +293,9 @@ Set.prototype = fool.subclass(Bindable, {
 
     replaceWith: function(replaceNode) {
         var first = this.slots()[0];
-        act(replaceNode, function action(n) { first.parentNode.replaceChild(n, first); });
+        act(replaceNode, function action(n) {
+            first.parentNode.replaceChild(n, first);
+        });
         return this;
     },
 
@@ -451,8 +461,8 @@ Set.prototype = fool.subclass(Bindable, {
     offset: function() {
         var rect = this.nodes[0].getBoundingClientRect();
         return {
-             left: rect.left + document.body.scrollLeft,
-             top: rect.top + document.body.scrollTop,
+             left: rect.left + rootDocument.body.scrollLeft,
+             top: rect.top + rootDocument.body.scrollTop,
              width: rect.width,
              height: rect.height
          };
