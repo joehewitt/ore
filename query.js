@@ -21,8 +21,8 @@ var cssNumber = {
 
 // *************************************************************************************************
 
-var rootNode = document;
-var rootDocument = document;
+var rootDocument = window.document;
+var rootNode = rootDocument;
 
 function query(selector, context) {
     if (selector === 'body') {
@@ -187,7 +187,7 @@ Set.prototype = fool.subclass(Bindable, {
     
     next: function() {
         var children = [];
-       _.each(this.slots(), function(n) {
+       _.each(this.nodes, function(n) {
             children.push(n.nextSibling);
         });
         return wrapSet(children);
@@ -195,7 +195,7 @@ Set.prototype = fool.subclass(Bindable, {
     
     previous: function() {
         var children = [];
-       _.each(this.slots(), function(n) {
+       _.each(this.nodes, function(n) {
             children.push(n.previousSibling);
         });
         return wrapSet(children);
