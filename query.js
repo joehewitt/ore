@@ -231,9 +231,23 @@ Set.prototype = fool.subclass(Bindable, {
         return this;
     },
 
-    hasClass: function(name) {
-        if (this.length) {
-            return classRE(name).test(this.nodes[0].className);            
+    cssClass: function(name, value) {
+        if (value === undefined) {
+           for (var i = 0, l = this.nodes.length; i < l; ++i) {
+                var n = this.nodes[i];
+                if (n.classList.contains(name)) {
+                    return true;
+                }
+            }
+        } else {
+           _.each(this.nodes, function(n) {
+                if (value && !n.classList.contains(name)) {
+                    n.classList.add(name);
+                } else if (!value && n.classList.contains(name)) {
+                    n.classList.remove(name);
+                }
+            });
+            return this;
         }
     },
     
@@ -480,7 +494,7 @@ Set.prototype = fool.subclass(Bindable, {
     
     listen: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
-            var node = query(n);
+            var node = wrap(n);
             var e = node[name];
             if (e == events.event) {
                 e = node[name] = e.create();
@@ -505,14 +519,67 @@ Set.prototype = fool.subclass(Bindable, {
             }
         });
         return this;
+    },
+
+    cmd: function(cmd) {
+        if (cmd === undefined) {
+           var commands = _.map(this.nodes, function(n) {
+                n = wrap(n);
+                if (n.command) {
+                    return n.command;
+                }
+
+                var commandId = n.attr('command');
+                if (commandId) {
+                    for (; n.length; n = n.parent()) {
+                        var commands = n.commands;
+                        if (commands && commands[commandId]) {
+                            return commands[commandId];
+                        }
+                    }
+                }
+            });
+           return commands.length > 1 ? commands : commands[0];
+        } else {
+            this.each(function(n) {
+                if (typeof(cmd) == 'string') {
+                    n.attr('command', cmd);
+                } else {
+                    n.command = cmd;
+                }
+            });
+        }
+    },
+
+    validateCondition: function(conditionId) {
+        var commands = this.commands;
+        if (commands) {
+            var condition = commands.conditionMap[conditionId];
+            var conditionFn = condition.validate;
+            var truth = conditionFn ? conditionFn() : false;
+
+            var commands = condition.commands;
+            for (var i = 0, l = commands.length; i < l; ++i) {
+                var command = commands[i];
+                this.query('*[command=' + command.id + ']').each(function(target) {
+                    target.cssClass('disabled', !truth);
+                });
+            }
+            return truth;
+        }
+    },
+
+    validateConditions: function() {
+        var commands = this.commands;
+        if (commands) {
+            for (var conditionId in commands.conditionMap) {
+                this.validateCondition(conditionId);
+            }
+        }
     }
 });
 
 // *************************************************************************************************
-
-function classRE(name) {
-    return new RegExp("(^|\\s)"+name+"(\\s|$)");
-}
 
 function wrap(node) {
     if (!node) {
