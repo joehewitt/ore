@@ -24,7 +24,7 @@ var cssNumber = {
 var rootDocument = window.document;
 var rootNode = rootDocument;
 
-function query(selector, context) {
+function query(selector, context, findOne) {
     if (selector === 'body') {
         return wrap(rootDocument.body);
     } else if (typeof selector === 'string') {
@@ -33,9 +33,15 @@ function query(selector, context) {
             return wrapSet([rootNode.getElementById(selector.substr(1))]);
         } else {
             var node = context ? unwrap(context) : rootNode;
-            return wrapSet(query.slice(node.querySelectorAll
-                ? node.querySelectorAll(selector)
-                : rootNode.querySelectorAll.call(node, selector)), 0);
+            if (findOne) {
+                return wrap(node.querySelector
+                    ? node.querySelector(selector)
+                    : rootNode.querySelector.call(node, selector));
+            } else {
+                return wrapSet(query.slice(node.querySelectorAll
+                    ? node.querySelectorAll(selector)
+                    : rootNode.querySelectorAll.call(node, selector)), 0);
+            }
         }
     } else {
         return wrap(selector);
@@ -87,8 +93,8 @@ Set.prototype = fool.subclass(Bindable, {
         // Meant to be overriden by subclasses
     },
       
-    query: function(selector) {
-        return query(selector, this);
+    query: function(selector, findOne) {
+        return query(selector, this, findOne);
     },
     
     equals: function(otherSet) {
@@ -339,9 +345,9 @@ Set.prototype = fool.subclass(Bindable, {
 
     html: function(value) {
         if (value === undefined) {
-            return this.nodes[0].innerHTML;
+            return this.slots()[0].innerHTML;
         } else {
-            _.each(this.nodes, function(n) {
+            _.each(this.slots(), function(n) {
                 n.innerHTML = value;
             });
             return this;
@@ -350,9 +356,9 @@ Set.prototype = fool.subclass(Bindable, {
 
     text: function(value) {
         if (value === undefined) {
-            return this.nodes[0].innerText;
+            return this.slots()[0].innerText;
         } else {
-           _.each(this.nodes, function(n) {
+            _.each(this.slots(), function(n) {
                 n.innerText = value;
             });
             return this;
@@ -361,7 +367,8 @@ Set.prototype = fool.subclass(Bindable, {
     
     attr: function(name, value) {
         if (value === undefined) {
-            return this.nodes[0].getAttribute(name);
+            var n = this.nodes[0];
+            return n && n.nodeType == 1 ? n.getAttribute(name) : null;
         } else {
            _.each(this.nodes, function(n) {
                 n.setAttribute(name, value);
@@ -372,7 +379,8 @@ Set.prototype = fool.subclass(Bindable, {
 
     prop: function(name, value) {
         if (value === undefined) {
-            return this.nodes[0][name];
+            var n = this.nodes[0];
+            return n ? n[name] : null;
         } else {
            _.each(this.nodes, function(n) {
                 n[name] = value;
@@ -407,10 +415,15 @@ Set.prototype = fool.subclass(Bindable, {
         }
         return this;
     },
+
+    focus: function() {
+        return this.val().focus();
+    },
     
     scrollTop: function(val) {
         if (val === undefined) {
-            return this.nodes[0].scrollTop;
+            var n = this.nodes[0];
+            return n ? n.scrollTop : null;
         } else {
            _.each(this.nodes, function(n) {
                 n.scrollTop = val;

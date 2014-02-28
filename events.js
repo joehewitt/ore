@@ -1,8 +1,22 @@
 /* See license.txt for terms of usage */
 
-function broadcaster() {}
+function dispatcher() {
+    // If listeners are added, this function is replaced with the real dispatcher. Otherwise,
+    // dispatching an event calls this and (obviously) nothing happens.
+}
 
-broadcaster.create = function(already) {
+dispatcher.dom = function(eventName, bubbles, cancelable) {
+    return function(event) {
+        var target = event.target;
+        if (target && target.length) {
+            var domEvent = new CustomEvent(eventName, {detail: event, bubbles: bubbles,
+                                                       cancelable: cancelable});
+            target.val().dispatchEvent(domEvent);
+        }
+    }
+}
+
+dispatcher.create = function(already, shouldPropagate) {
     function fn(event) {
         if (already || this.ready) {
             fn.dispatch(event);            
@@ -15,7 +29,16 @@ broadcaster.create = function(already) {
         if (!listeners) {
             listeners = [cb];
         } else {
-            listeners[listeners.length] = cb;
+            listeners.push(cb);
+        }
+    }
+
+    fn.removeListener = function(cb) {
+        if (listeners) {
+            var index = listeners.indexOf(cb);
+            if (index != -1) {
+                listeners.splice(index, 1);
+            }
         }
     }
     
@@ -30,4 +53,4 @@ broadcaster.create = function(already) {
     return fn;
 };
 
-exports.event = broadcaster;
+exports.event = dispatcher;

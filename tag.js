@@ -568,6 +568,7 @@ Tag.prototype = {
         
         var js = fnBlock.join("");
         // console.log(js.replace(/(\;|\{)/g, "$1\n"));
+        // js = js.replace(/(\;|\{)/g, "$1\n");
         this.renderDOM = sandboxEval(js, sandbox);
     },
 
