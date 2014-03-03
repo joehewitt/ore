@@ -261,9 +261,11 @@ Set.prototype = fool.subclass(Bindable, {
         return wrap(this.nodes[index]);
     },
 
-    append: function(target) {
-        var slot = this.slots()[0];
-        act(target, function action(n) { slot.appendChild(n); });
+    append: function(target, ignoreSlots) {
+        var slot = ignoreSlots ? this.nodes[0] : this.slots()[0];
+        if (slot) {
+            act(target, function action(n) { slot.appendChild(n); });
+        }
         return this;
     },
 
@@ -369,12 +371,16 @@ Set.prototype = fool.subclass(Bindable, {
         if (value === undefined) {
             var n = this.nodes[0];
             return n && n.nodeType == 1 ? n.getAttribute(name) : null;
+        } else if (value === null) {
+           _.each(this.nodes, function(n) {
+                n.removeAttribute(name);
+            });
         } else {
            _.each(this.nodes, function(n) {
                 n.setAttribute(name, value);
             });
-            return this;
         }
+        return this;
     },
 
     prop: function(name, value) {
@@ -486,23 +492,32 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     offset: function() {
-        var rect = this.nodes[0].getBoundingClientRect();
-        return {
-             left: rect.left + rootDocument.body.scrollLeft,
-             top: rect.top + rootDocument.body.scrollTop,
-             width: rect.width,
-             height: rect.height
-         };
+        var first = this.nodes[0];
+        if (first) {
+            var rect = first.getBoundingClientRect();
+            return {
+                 left: rect.left + rootDocument.body.scrollLeft,
+                 top: rect.top + rootDocument.body.scrollTop,
+                 width: rect.width,
+                 height: rect.height
+             };
+        } else {
+            return {};
+        }
     },
     
     position: function() {
         var first = this.nodes[0];
-        return {
-            left: first.offsetLeft,
-            top: first.offsetTop,
-            width: first.offsetWidth,
-            height: first.offsetHeight
-        };
+        if (first) {
+            return {
+                left: first.offsetLeft,
+                top: first.offsetTop,
+                width: first.offsetWidth,
+                height: first.offsetHeight
+            };
+        } else {
+            return {};
+        }
     },
     
     listen: function(name, fn, capture) {
@@ -534,7 +549,7 @@ Set.prototype = fool.subclass(Bindable, {
         return this;
     },
 
-    cmd: function(cmd) {
+    cmd: function(cmd, commandName) {
         if (cmd === undefined) {
            var commands = _.map(this.nodes, function(n) {
                 n = wrap(n);
@@ -542,12 +557,15 @@ Set.prototype = fool.subclass(Bindable, {
                     return n.command;
                 }
 
-                var commandId = n.attr('command');
+                var commandId = commandName || n.attr('command');
                 if (commandId) {
                     for (; n.length; n = n.parent()) {
                         var commands = n.commands;
-                        if (commands && commands[commandId]) {
-                            return commands[commandId];
+                        if (commands) {
+                            var command = commands.find(commandId);
+                            if (command) {
+                                return command;
+                            }
                         }
                     }
                 }
