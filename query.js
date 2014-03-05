@@ -582,7 +582,10 @@ Set.prototype = fool.subclass(Bindable, {
         }
     },
 
-    validateCondition: function(conditionId) {
+    validateCondition: function(conditionId, subtree) {
+        if (!subtree) {
+            subtree = this;
+        }
         var commands = this.commands;
         if (commands) {
             var condition = commands.conditionMap[conditionId];
@@ -592,7 +595,7 @@ Set.prototype = fool.subclass(Bindable, {
             var commands = condition.commands;
             for (var i = 0, l = commands.length; i < l; ++i) {
                 var command = commands[i];
-                this.query('*[command=' + command.id + ']').each(function(target) {
+                subtree.query('*[command=' + command.id + ']').each(function(target) {
                     target.cssClass('disabled', !truth);
                 });
             }
@@ -600,11 +603,14 @@ Set.prototype = fool.subclass(Bindable, {
         }
     },
 
-    validateConditions: function() {
+    validateConditions: function(subtree) {
         var commands = this.commands;
         if (commands) {
+            if (!subtree) {
+                subtree = this;
+            }
             for (var conditionId in commands.conditionMap) {
-                this.validateCondition(conditionId);
+                this.validateCondition(conditionId, subtree);
             }
         }
     }

@@ -6,7 +6,6 @@ var _ = require('underscore');
 exports.Binder = function() {
     this.bindings = {};
     this.values = {};
-    this.disableListeners = false;
 }
 
 exports.Binder.prototype = {
@@ -38,12 +37,10 @@ exports.Binder.prototype = {
 
         var allKeys = _.extend(defaults, values);
 
-        // this.disableListeners = true;
         for (var key in allKeys) {
             var value = key in values ? values[key] : defaults[key];
             this.update(key, value, true);
         }
-        // this.disableListeners = false;
     },
 
     bind: function(key, object, property) {
@@ -98,12 +95,11 @@ exports.Binder.prototype = {
             this.values[key] = value;
 
             var keyBindings = this.bindings[key];
-            var disableListeners = this.disableListeners;
             for (var i = 0, l = keyBindings ? keyBindings.length : 0; i < l; ++i) {
                 var binding = keyBindings[i];
                 if (binding.object) {
                     binding.object[binding.property] = value;
-                } else if (!disableListeners) {
+                } else {
                     binding.listener(key, value);
                 }
             }
@@ -136,11 +132,12 @@ exports.Bindable.prototype = {
         if (property in this.bindings) {
             this.bindings[property].push(binding);
         } else {
+            wrapProperty(this, property);
+            this[property] = binder.values[key];
+
             var propertyBindings = [binding];
             this.bindings[property] = propertyBindings;
             binder.bind(key, this, property);
-
-            wrapProperty(this, property);
         }
     },
 
@@ -159,7 +156,7 @@ exports.Bindable.prototype = {
             }            
         }
         binder.unbind(key, this, property);
-    },
+    }
 };
 
 function wrapProperty(object, property) {

@@ -681,7 +681,7 @@ Tag.prototype = {
         path.pop();
     },
     
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // ---------------------------------------------------------------------------------------------
     
     createHTML: function(args, outputs, context) {
         var code = [];
@@ -1208,10 +1208,15 @@ TagSet.prototype = fool.subclass($.Set, {
 function createTag(base) {
     function cons(params, context, noInit) {
         if (this instanceof cons) {
-            var previousBinder = bindings.binder;
-            bindings.binder = this.binder;
+            var previousBinder;
+            if (this.binder) {
+                previousBinder = bindings.binder;
+                bindings.binder = this.binder;
+            }
             cons.tag.instantiate(this, params, context, noInit);
-            bindings.binder = previousBinder;
+            if (previousBinder) {
+                bindings.binder = previousBinder;
+            }
         } else {
             var cons2 = createTag(cons.tag);
             var definition = cons2.tag.merge.apply(cons2.tag, arguments);

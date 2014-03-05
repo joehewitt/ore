@@ -43,7 +43,7 @@ dispatcher.create = function(already, shouldPropagate) {
     }
     
     fn.dispatch = function(event) {
-        if (listeners) {
+        if (listeners && !fn.disabled) {
             for (var i = 0; i < listeners.length; ++i) {
                 listeners[i](event);
             }
