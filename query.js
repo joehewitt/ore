@@ -21,6 +21,10 @@ var cssNumber = {
 
 // *************************************************************************************************
 
+var windowSet;
+var documentSet;
+var emptySet;
+
 var rootDocument = window.document;
 var rootNode = rootDocument;
 
@@ -30,7 +34,7 @@ function query(selector, context, findOne) {
     } else if (typeof selector === 'string') {
         if (!context && /^#([\w\-]+)$/.exec(selector)) {
             // Shortcut for getting element by id
-            return wrapSet([rootNode.getElementById(selector.substr(1))]);
+            return wrap(rootNode.getElementById(selector.substr(1)));
         } else {
             var node = context ? unwrap(context) : rootNode;
             if (findOne) {
@@ -620,13 +624,33 @@ Set.prototype = fool.subclass(Bindable, {
 
 function wrap(node) {
     if (!node) {
-        return new Set([]);
+        if (!emptySet) {
+            return emptySet = new Set([]);
+        } else {
+            return emptySet;            
+        }
     } else if (node.ore) {
         return node.ore;
     } else if (node.nodes) {
         return node;
     } else if (node instanceof Array) {
-        return new Set(unwrapArray(node));
+        if (!node.length) {
+            return wrap(null);
+        } else {
+            return new Set(unwrapArray(node));            
+        }
+    } else if (node == window) {
+        if (!windowSet) {
+            return windowSet = new Set([node]);
+        } else {
+            return windowSet;
+        }        
+    } else if (node == document) {
+        if (!documentSet) {
+            return documentSet = new Set([node]);
+        } else {
+            return documentSet;
+        }        
     } else {
         return new Set([node]);
     }
@@ -673,7 +697,7 @@ function wrapSet(nodes) {
     if (nodes.length == 1) {
         return wrap(nodes[0]);
     } else {
-        return new Set(nodes);
+        return wrap(nodes);
     }
 }
 
