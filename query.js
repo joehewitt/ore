@@ -553,20 +553,25 @@ Set.prototype = fool.subclass(Bindable, {
         return this;
     },
 
-    cmd: function(cmd, commandName) {
+    cmd: function(cmd, commandId) {
         if (cmd === undefined) {
            var commands = _.map(this.nodes, function(n) {
                 n = wrap(n);
-                if (n.command) {
+                if (!commandId && n.command) {
                     return n.command;
                 }
 
-                var commandId = commandName || n.attr('command');
+                if (!commandId) {
+                    commandId = n.attr('command');
+                }
                 if (commandId) {
+                    var parts = commandId.split('.');
+                    var mapName = parts[0];
+                    var commandName = parts[1];
                     for (; n.length; n = n.parent()) {
                         var commands = n.commands;
                         if (commands) {
-                            var command = commands.find(commandId);
+                            var command = commands.manager.find(mapName, commandName);
                             if (command) {
                                 return command;
                             }
@@ -585,39 +590,6 @@ Set.prototype = fool.subclass(Bindable, {
             });
         }
     },
-
-    validateCondition: function(conditionId, subtree) {
-        if (!subtree) {
-            subtree = this;
-        }
-        var commands = this.commands;
-        if (commands) {
-            var condition = commands.conditionMap[conditionId];
-            var conditionFn = condition.validate;
-            var truth = conditionFn ? conditionFn() : false;
-
-            var commands = condition.commands;
-            for (var i = 0, l = commands.length; i < l; ++i) {
-                var command = commands[i];
-                subtree.query('*[command=' + command.id + ']').each(function(target) {
-                    target.cssClass('disabled', !truth);
-                });
-            }
-            return truth;
-        }
-    },
-
-    validateConditions: function(subtree) {
-        var commands = this.commands;
-        if (commands) {
-            if (!subtree) {
-                subtree = this;
-            }
-            for (var conditionId in commands.conditionMap) {
-                this.validateCondition(conditionId, subtree);
-            }
-        }
-    }
 });
 
 // *************************************************************************************************
