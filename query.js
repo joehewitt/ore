@@ -564,14 +564,12 @@ Set.prototype = fool.subclass(Bindable, {
                 if (!commandId) {
                     commandId = n.attr('command');
                 }
+
                 if (commandId) {
-                    var parts = commandId.split('.');
-                    var mapName = parts[0];
-                    var commandName = parts[1];
                     for (; n.length; n = n.parent()) {
                         var commands = n.commands;
                         if (commands) {
-                            var command = commands.manager.find(mapName, commandName);
+                            var command = commands.manager.find(commandId);
                             if (command) {
                                 return command;
                             }
