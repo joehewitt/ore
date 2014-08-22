@@ -11,7 +11,7 @@ dispatcher.dom = function(eventName, bubbles, cancelable) {
         if (target && target.length) {
             var domEvent = new CustomEvent(eventName, {detail: event, bubbles: bubbles,
                                                        cancelable: cancelable});
-            target.val().dispatchEvent(domEvent);
+            return target.val().dispatchEvent(domEvent);
         }
     }
 }

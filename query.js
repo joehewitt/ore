@@ -102,6 +102,7 @@ Set.prototype = fool.subclass(Bindable, {
     },
     
     equals: function(otherSet) {
+        otherSet = wrap(otherSet);
         if (this.length == otherSet.length) {
             var nodes = this.nodes;
             var others = otherSet.nodes;
@@ -116,7 +117,7 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     each: function(callback) {
-        return _.each(this.nodes, function(n) { return callback(wrap(n)); });
+        return _.each(this.nodes, function(n, i) { return callback(wrap(n), i); });
     },
 
     find: function(callback) {
@@ -555,29 +556,29 @@ Set.prototype = fool.subclass(Bindable, {
 
     cmd: function(cmd, commandId) {
         if (cmd === undefined) {
-           var commands = _.map(this.nodes, function(n) {
-                n = wrap(n);
-                if (!commandId && n.command) {
-                    return n.command;
-                }
+            if (this.command) return this.command;
+            
+            var container = this.closest('.container');
+            if (container.findCommand) {
+                var commands = _.map(this.nodes, function(n) {
+                    n = wrap(n);
+                    if (!commandId && n.command) {
+                        return n.command;
+                    }
 
-                if (!commandId) {
-                    commandId = n.attr('command');
-                }
+                    if (!commandId) {
+                        commandId = n.attr('command');
+                    }
 
-                if (commandId) {
-                    for (; n.length; n = n.parent()) {
-                        var commands = n.commands;
-                        if (commands) {
-                            var command = commands.manager.find(commandId);
-                            if (command) {
-                                return command;
-                            }
+                    if (commandId) {
+                        var command = container.findCommand(commandId);
+                        if (command) {
+                            return command;
                         }
                     }
-                }
-            });
-           return commands.length > 1 ? commands : commands[0];
+                });
+               return commands.length > 1 ? commands : commands[0];
+            }
         } else {
             this.each(function(n) {
                 if (typeof(cmd) == 'string') {
