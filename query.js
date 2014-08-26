@@ -121,7 +121,7 @@ Set.prototype = fool.subclass(Bindable, {
     },
 
     find: function(callback) {
-        return _.find(this.nodes, function(n) { return callback(wrap(n)); });
+        return wrap(_.find(this.nodes, function(n) { return callback(wrap(n)); }));
     },
 
     filter: function(callback) {
@@ -172,10 +172,18 @@ Set.prototype = fool.subclass(Bindable, {
         return wrapSet(chain);
     },
 
-    parent: function() {
+    parent: function(isElement) {
         var parents = [];
        _.each(this.nodes, function(n) {
             parents.push(n.parentNode);
+        });
+        return wrapSet(parents);
+    },
+    
+    parentElement: function() {
+        var parents = [];
+       _.each(this.nodes, function(n) {
+            parents.push(n.parentElement);
         });
         return wrapSet(parents);
     },
