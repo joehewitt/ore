@@ -87,7 +87,7 @@ Set.prototype = fool.subclass(Bindable, {
             element.ore = this;
         }
     },
-        
+
     init: function() {
         this.construct();
         this.ready = true;
@@ -96,11 +96,11 @@ Set.prototype = fool.subclass(Bindable, {
     construct: function() {
         // Meant to be overriden by subclasses
     },
-      
+
     query: function(selector, findOne) {
         return query(selector, this, findOne);
     },
-    
+
     equals: function(otherSet) {
         otherSet = wrap(otherSet);
         if (this.length == otherSet.length) {
@@ -118,6 +118,10 @@ Set.prototype = fool.subclass(Bindable, {
 
     each: function(callback) {
         return _.each(this.nodes, function(n, i) { return callback(wrap(n), i); });
+    },
+
+    map: function(callback) {
+        return _.map(this.nodes, function(n, i) { return callback(wrap(n), i); });
     },
 
     find: function(callback) {
@@ -179,7 +183,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(parents);
     },
-    
+
     parentElement: function() {
         var parents = [];
        _.each(this.nodes, function(n) {
@@ -187,7 +191,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(parents);
     },
-    
+
     first: function() {
         var children = [];
        _.each(this.slots(), function(n) {
@@ -195,7 +199,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(children);
     },
-    
+
     last: function() {
         var children = [];
        _.each(this.slots(), function(n) {
@@ -203,7 +207,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(children);
     },
-    
+
     next: function() {
         var children = [];
        _.each(this.nodes, function(n) {
@@ -211,7 +215,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(children);
     },
-    
+
     previous: function() {
         var children = [];
        _.each(this.nodes, function(n) {
@@ -219,7 +223,23 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(children);
     },
-    
+
+    nextElement: function() {
+        var children = [];
+       _.each(this.nodes, function(n) {
+            children.push(n.nextElementSibling);
+        });
+        return wrapSet(children);
+    },
+
+    previousElement: function() {
+        var children = [];
+       _.each(this.nodes, function(n) {
+            children.push(n.previousElementSibling);
+        });
+        return wrapSet(children);
+    },
+
     child: function(index) {
         var children = [];
        _.each(this.slots(), function(n) {
@@ -235,7 +255,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return wrapSet(clones);
     },
-    
+
     addClass: function(name) {
        _.each(this.nodes, function(n) {
             n.classList.add(name);
@@ -269,7 +289,7 @@ Set.prototype = fool.subclass(Bindable, {
             return this;
         }
     },
-    
+
     get: function(index) {
         return wrap(this.nodes[index]);
     },
@@ -294,7 +314,7 @@ Set.prototype = fool.subclass(Bindable, {
             first = first.nodes[0];
             act(target, function action(n) { slot.insertBefore(n, first); });
         } else {
-            act(target, function action(n) { slot.appendChild(n); });            
+            act(target, function action(n) { slot.appendChild(n); });
         }
         return this;
     },
@@ -353,7 +373,7 @@ Set.prototype = fool.subclass(Bindable, {
     slots: function() {
         return _.map(this.nodes, function(n) { return n.__slot__ ? n.__slot__ : n; });
     },
-    
+
     val: function() {
         return this.nodes.length ? this.nodes[0] : null;
     },
@@ -379,7 +399,7 @@ Set.prototype = fool.subclass(Bindable, {
             return this;
         }
     },
-    
+
     attr: function(name, value) {
         if (value === undefined) {
             var n = this.nodes[0];
@@ -407,7 +427,7 @@ Set.prototype = fool.subclass(Bindable, {
             return this;
         }
     },
-    
+
     css: function(name, value) {
         if (value === undefined) {
             return this.nodes.length ? this.nodes[0].style[toCamelCase(name)] : undefined;
@@ -425,7 +445,7 @@ Set.prototype = fool.subclass(Bindable, {
         }
         return this;
     },
-    
+
     style: function(name, value) {
         if (value === undefined) {
             return this.nodes.length ? getComputedStyle(this.nodes[0])[toCamelCase(name)] : undefined;
@@ -438,7 +458,7 @@ Set.prototype = fool.subclass(Bindable, {
     focus: function() {
         return this.val().focus();
     },
-    
+
     scrollTop: function(val) {
         if (val === undefined) {
             var n = this.nodes[0];
@@ -450,7 +470,7 @@ Set.prototype = fool.subclass(Bindable, {
             return this;
         }
     },
-    
+
     scrollLeft: function(val) {
         if (val === undefined) {
             return this.nodes[0].scrollLeft;
@@ -465,7 +485,7 @@ Set.prototype = fool.subclass(Bindable, {
     scrollWidth: function() {
         return this.nodes[0].scrollWidth;
     },
-    
+
     scrollHeight: function() {
         return this.nodes[0].scrollHeight;
     },
@@ -487,7 +507,7 @@ Set.prototype = fool.subclass(Bindable, {
             return this;
         }
     },
-    
+
     width: function() {
         return this.nodes.length ? this.nodes[0].offsetWidth : 0;
     },
@@ -518,7 +538,7 @@ Set.prototype = fool.subclass(Bindable, {
             return {};
         }
     },
-    
+
     position: function() {
         var first = this.nodes[0];
         if (first) {
@@ -532,7 +552,7 @@ Set.prototype = fool.subclass(Bindable, {
             return {};
         }
     },
-    
+
     listen: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
             var node = wrap(n);
@@ -550,7 +570,7 @@ Set.prototype = fool.subclass(Bindable, {
         });
         return this;
     },
-    
+
     unlisten: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
             if (has("dom-addeventlistener")) {
@@ -565,7 +585,7 @@ Set.prototype = fool.subclass(Bindable, {
     cmd: function(cmd, commandId) {
         if (cmd === undefined) {
             if (this.command) return this.command;
-            
+
             var container = this.closest('.container');
             if (container.findCommand) {
                 var commands = _.map(this.nodes, function(n) {
@@ -606,7 +626,7 @@ function wrap(node) {
         if (!emptySet) {
             return emptySet = new Set([]);
         } else {
-            return emptySet;            
+            return emptySet;
         }
     } else if (node.ore) {
         return node.ore;
@@ -616,20 +636,20 @@ function wrap(node) {
         if (!node.length) {
             return wrap(null);
         } else {
-            return new Set(unwrapArray(node));            
+            return new Set(unwrapArray(node));
         }
     } else if (node == window) {
         if (!windowSet) {
             return windowSet = new Set([node]);
         } else {
             return windowSet;
-        }        
+        }
     } else if (node == document) {
         if (!documentSet) {
             return documentSet = new Set([node]);
         } else {
             return documentSet;
-        }        
+        }
     } else {
         return new Set([node]);
     }
