@@ -11,7 +11,7 @@ exports.Binder = function() {
 exports.Binder.prototype = {
     persist: function(storageKey) {
         if (storageKey) {
-            this.storageKey = storageKey;   
+            this.storageKey = storageKey;
         }
         if (this.storageKey) {
             localStorage[this.storageKey] = JSON.stringify(this.values);
@@ -123,7 +123,7 @@ exports.Bindable.prototype = {
     addBinding: function(property, key, binder) {
         if (!this.bindings) {
             this.bindings = {};
-        }  
+        }
         if (!binder) {
             binder = exports.binder;
         }
@@ -149,11 +149,11 @@ exports.Bindable.prototype = {
             var propertyBindings = this.bindings[property];
             for (var i = 0, l = propertyBindings.length; i < l; ++i) {
                 var binding = propertyBindings[i];
-                if (binding.key == key) {                    
+                if (binding.key == key) {
                     propertyBindings.splice(i, 1);
                     --i;
                 }
-            }            
+            }
         }
         binder.unbind(key, this, property);
     }
@@ -165,7 +165,7 @@ function wrapProperty(object, property) {
     var setter = object.__lookupSetter__(property);
 
     object.__defineSetter__(property, _.bind(function(value) {
-        if (object[storageName] != value) {
+        if (object[storageName] !== value) {
             object[storageName] = value;
 
             if (object.bindings && property in object.bindings) {
@@ -191,5 +191,5 @@ function wrapProperty(object, property) {
     } else {
         // Redefine the getter since defining the setter above will reset it
         object.__defineGetter__(property, getter);
-    }    
+    }
 }

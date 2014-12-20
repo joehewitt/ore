@@ -37,7 +37,9 @@ function query(selector, context, findOne) {
             return wrap(rootNode.getElementById(selector.substr(1)));
         } else {
             var node = context ? unwrap(context) : rootNode;
-            if (findOne) {
+            if (!node) {
+                return wrap(null);
+            } else if (findOne) {
                 return wrap(node.querySelector
                     ? node.querySelector(selector)
                     : rootNode.querySelector.call(node, selector));
@@ -339,7 +341,9 @@ Set.prototype = fool.subclass(Bindable, {
     after: function(insertNode, afterNode) {
         if (afterNode && unwrap(afterNode).nextSibling) {
             var first = this.slots()[0];
-            act(insertNode, function action(n) { first.insertBefore(n, unwrap(afterNode).nextSibling); });
+            act(insertNode, function action(n) {
+                first.insertBefore(n, unwrap(afterNode).nextSibling);
+            });
         } else {
             this.append(insertNode);
         }
@@ -448,7 +452,9 @@ Set.prototype = fool.subclass(Bindable, {
 
     style: function(name, value) {
         if (value === undefined) {
-            return this.nodes.length ? getComputedStyle(this.nodes[0])[toCamelCase(name)] : undefined;
+            return this.nodes.length
+                ? getComputedStyle(this.nodes[0])[toCamelCase(name)]
+                : undefined;
         } else if (this.nodes.length) {
             return this.css(name, value);
         }
@@ -573,7 +579,15 @@ Set.prototype = fool.subclass(Bindable, {
 
     unlisten: function(name, fn, capture) {
        _.each(this.nodes, function(n) {
-            if (has("dom-addeventlistener")) {
+            var node = wrap(n);
+            var e = node[name];
+            if (e == events.event) {
+                e = node[name] = e.create();
+            }
+
+            if (e && e.removeListener) {
+                e.removeListener(fn);
+            } else if (has("dom-addeventlistener")) {
                 n.removeEventListener(name, fn, capture);
             } else if (n.detachEvent) {
                 n.detachEvent(name, fn);
