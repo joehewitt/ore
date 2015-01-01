@@ -150,6 +150,32 @@ Set.prototype = fool.subclass(Bindable, {
         return wrap(n && !(n === rootNode) ? n : null);
     },
 
+    contained: function(selector) {
+        if (typeof(selector) == 'string') {
+            for (var i = 0, l = this.nodes.length; i < l; ++i) {
+                var node = this.nodes[i];
+                while (node && node.nodeType == 1) {
+                    if (node.classList.contains(selector)) {
+                        return wrap(node);
+                    }
+                    node = node.parentNode;
+                }
+            }
+        } else if (typeof(selector) == 'function') {
+            for (var i = 0, l = this.nodes.length; i < l; ++i) {
+                var node = this.nodes[i];
+                var baseNode = node;
+                while (node) {
+                    if (selector(node, baseNode)) {
+                        return wrap(node);
+                    }
+                    node = node.parentNode;
+                }
+            }
+        }
+        return null;
+    },
+
     contains: function(containedNode) {
         if (containedNode instanceof Set) {
             containedNode = containedNode.val();
@@ -600,8 +626,8 @@ Set.prototype = fool.subclass(Bindable, {
         if (cmd === undefined) {
             if (this.command) return this.command;
 
-            var container = this.closest('.container');
-            if (container.findCommand) {
+            var container = this.contained('container');
+            if (container && container.findCommand) {
                 var commands = _.map(this.nodes, function(n) {
                     n = wrap(n);
                     if (!commandId && n.command) {
